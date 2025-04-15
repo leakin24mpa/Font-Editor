@@ -1,5 +1,5 @@
 export class FElement{
-    element: HTMLElement;
+    element;
     constructor(type: string | null, ...children: FElement[]){
         if(!type){
             return;
@@ -8,7 +8,6 @@ export class FElement{
         for(var i in children){
             this.element.appendChild(children[i].element);
         }
-        return this;
     }
     static fromExisting(e: HTMLElement){
         let fe = new FElement(null);
