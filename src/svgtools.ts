@@ -3,18 +3,12 @@ import { FElement } from "./htmltools.js";
 const ns =  "http://www.w3.org/2000/svg";
 export class SVGElement extends FElement{
     constructor(type: string){
-        super(null);
-        this.element = document.createElementNS(ns, type);
-
+        super(document.createElementNS(ns, type));
     }
 }
 export class FESVG extends FElement{
     constructor(...children: SVGElement[]){
-        super(null);
-        this.element = document.createElementNS(ns, "svg");
-        for(var i in children){
-            this.element.appendChild(children[i].element);
-        }
+        super(document.createElementNS(ns, "svg"), ...children);
     }
 }
 export const SVG = (...children: SVGElement[]) => new FESVG(...children);
@@ -22,9 +16,7 @@ export const SVG = (...children: SVGElement[]) => new FESVG(...children);
 export class SVGGroup extends SVGElement{
     constructor(...children: SVGElement[]){
         super("g");
-        for(var i in children){
-            this.element.appendChild(children[i].element);
-        }
+        this.addChildren(...children);
     }
 }
 export const GROUP = (...children: SVGElement[]) => new SVGGroup(...children);
