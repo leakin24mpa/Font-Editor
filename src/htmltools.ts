@@ -1,19 +1,17 @@
 export class FElement{
     element: HTMLElement;
-    constructor(type: string | null, ...children: FElement[]){
-        if(!type){
-            return;
+    constructor(type: string | HTMLElement, ...children: FElement[]){
+        if(typeof type === 'string' || type instanceof String){
+            this.element = document.createElement(type as string);
         }
-        this.element = document.createElement(type);
+        else{
+            this.element = type;
+        }
+        
         for(var i in children){
             this.element.appendChild(children[i].element);
         }
         return this;
-    }
-    static fromExisting(e: HTMLElement){
-        let fe = new FElement(null);
-        fe.element = e;
-        return fe;
     }
     withAttributes(attributes){
         for(var attribute in attributes){
@@ -58,7 +56,7 @@ export class FElement{
 export function ElementByID(id: string){
     let e = document.getElementById(id);
     if(e){
-        return FElement.fromExisting(e);
+        return new FElement(e);
     }
     else{
         throw new Error("Could not find an element with id \"" + id + "\".");
