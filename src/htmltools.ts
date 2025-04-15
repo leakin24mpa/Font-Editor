@@ -1,5 +1,5 @@
 export class FElement{
-    element: HTMLElement;
+    element;
     constructor(type: string | HTMLElement, ...children: FElement[]){
         if(typeof type === 'string' || type instanceof String){
             this.element = document.createElement(type as string);
