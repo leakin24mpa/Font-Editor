@@ -13,12 +13,17 @@ export type DraggableFElement = Draggable & FElement;
 export class FEDragRegion extends FElement{
     controller: DragController;
     getChildrenPositions: Function;
+    onDragEnd: Function;
+    private completeDrag(mouseEvent){
+        this.controller.endDrag(mouseEvent.offsetX, mouseEvent.offsetY);
+        this.onDragEnd();
+    }
     constructor(element: FElement, ...children: DraggableFElement[]){
         super(element.element, ...children);
         this.controller = new DragController();
-
-        this.onEvent("mouseup", (e) => this.controller.endDrag(e.offsetX, e.offsetY));
-        this.onEvent("mouseleave", (e) => this.controller.endDrag(e.offsetX, e.offsetY));
+        this.onDragEnd = () => {};
+        this.onEvent("mouseup", (e) => this.completeDrag(e));
+        this.onEvent("mouseleave", (e) => this.completeDrag(e));
         this.onEvent("mousemove", (e) => this.controller.updateDrag(e.offsetX, e.offsetY));
         
         this.getChildrenPositions = () => {

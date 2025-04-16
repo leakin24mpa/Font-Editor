@@ -28,16 +28,22 @@ class DraggablePoint extends SVGCircle implements Draggable{
 }
 export class FEpointPlot extends FEdiv{
     constructor(numPoints){
-        super(
+        let bezierPath = PATH("M 100 100 Q 200 200 300 100");
+        let dragArea = new FEDragRegion(SVG().withClass("point-plot").withAttributes({viewBox: "0 0 400 400"}),
+                    ...multiElement(numPoints, (i) => new DraggablePoint(randomCoord(), randomCoord(), 5).withClass("draggable-point")))
 
-            new FEDragRegion(SVG().withClass("point-plot").withAttributes({viewBox: "0 0 400 400"}),
-                ...multiElement(numPoints, (i) => new DraggablePoint(randomCoord(), randomCoord(), 5).withClass("draggable-point"))
-            ).addChildren(
-                PATH("M 100 100 Q 200 200 300 100")
-            )
-          
-            
+        super(
+            dragArea.addChildren(bezierPath)
         )
+
+        dragArea.onDragEnd = () => {
+            let p = dragArea.getChildrenPositions();
+            let data = `M ${p[0].x} ${p[0].y}`
+            for(let i = 1; i < p.length; i+= 2){
+                data += `Q ${p[i].x} ${p[i].y} ${p[i + 1].x} ${p[i + 1].y}`
+            }
+            bezierPath.setData(data);
+        }
         this.withClass("point-plot-container");
     }
 }
