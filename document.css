@@ -1,4 +1,4 @@
-.point-plot, .point-plot-container{
-    width: 100px;
-    height: 100px;
+.point-plot, .point-plot-container, .point-group{
+    width: 400px;
+    height: 400px;
 }

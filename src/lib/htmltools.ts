@@ -48,6 +48,7 @@ export class FElement{
         for(var i in children){
             this.element.appendChild(children[i].element);
         }
+        return this;
     }
 }
 

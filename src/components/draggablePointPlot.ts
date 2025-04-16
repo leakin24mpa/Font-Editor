@@ -1,7 +1,7 @@
 import { FEDragRegion, multiElement } from "../lib/domtools.js";
 import { Draggable } from "../lib/draggable.js";
 import { FEdiv } from "../lib/htmltools.js";
-import { CIRCLE, GROUP, SVG, SVGCircle } from "../lib/svgtools.js";
+import { CIRCLE, GROUP, PATH, SVG, SVGCircle } from "../lib/svgtools.js";
 
 function randomCoord(){
     return Math.random() * 100;
@@ -30,8 +30,12 @@ export class FEpointPlot extends FEdiv{
     constructor(numPoints){
         super(
 
-            new FEDragRegion(SVG().withClass("point-plot").withAttributes({viewBox: "0 0 100 100"}),
-                ...multiElement(numPoints, (i) => new DraggablePoint(randomCoord(), randomCoord(), 5).withClass("draggable-point")))
+            new FEDragRegion(SVG().withClass("point-plot").withAttributes({viewBox: "0 0 400 400"}),
+                ...multiElement(numPoints, (i) => new DraggablePoint(randomCoord(), randomCoord(), 5).withClass("draggable-point"))
+            ).addChildren(
+                PATH("M 100 100 Q 200 200 300 100")
+            )
+          
             
         )
         this.withClass("point-plot-container");
