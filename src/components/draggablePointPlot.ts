@@ -1,7 +1,7 @@
-import { FEDragRegion, multiElement } from "../lib/domtools.js";
+import { FEdragRegion, multiElement } from "../lib/domtools.js";
 import { Draggable } from "../lib/draggable.js";
 import { FEdiv } from "../lib/htmltools.js";
-import { CIRCLE, GROUP, PATH, SVG, SVGCircle } from "../lib/svgtools.js";
+import { CIRCLE, FESVG, GROUP, PATH, SVG, SVGCircle } from "../lib/svgtools.js";
 
 function randomCoord(){
     return Math.random() * 100;
@@ -11,33 +11,40 @@ function randomCoord(){
 class DraggablePoint extends SVGCircle implements Draggable{
     x: number;
     y: number;
+    visualx: number;
+    visualy: number;
     constructor(x,y,radius ){
         super(x,y,radius);
         this.x = x;
         this.y = y;
-
+        this.visualx = x;
+        this.visualy = y;
     }
     duringDrag(mouseDeltaX: number, mouseDeltaY: number): void {
-        this.setPosition(mouseDeltaX + this.x, mouseDeltaY + this.y);
+        this.visualx = mouseDeltaX + this.x;
+        this.visualy = mouseDeltaY + this.y;
+        this.setPosition(this.visualx, this.visualy);
     }
     completeDrag(mouseDeltaX: number, mouseDeltaY: number): void {
         this.x += mouseDeltaX;
         this.y += mouseDeltaY;
+        this.visualx = this.x;
+        this.visualy = this.y;
         this.setPosition(this.x, this.y);
     }
 }
-export class FEpointPlot extends FEdiv{
+export class FEpointPlot extends FEdragRegion(FESVG){
     constructor(numPoints){
         let bezierPath = PATH("M 100 100 Q 200 200 300 100");
-        let dragArea = new FEDragRegion(SVG().withClass("point-plot").withAttributes({viewBox: "0 0 400 400"}),
-                    ...multiElement(numPoints, (i) => new DraggablePoint(randomCoord(), randomCoord(), 5).withClass("draggable-point")))
-
+        let points = multiElement(numPoints, (i) => new DraggablePoint(randomCoord(), randomCoord(), 5).withClass("draggable-point"));
         super(
-            dragArea.addChildren(bezierPath)
+            bezierPath,
+            GROUP(...points)
         )
-
-        dragArea.onDragEnd = () => {
-            let p = dragArea.getChildrenPositions();
+        this.addDraggableChildren(...points)
+        this.withClass("point-plot").withAttributes({viewBox: "0 0 400 400"});
+        this.whileDragging = () => {
+            let p = this.getVisualPositions();
             let data = `M ${p[0].x} ${p[0].y}`
             for(let i = 1; i < p.length; i+= 2){
                 data += `Q ${p[i].x} ${p[i].y} ${p[i + 1].x} ${p[i + 1].y}`
