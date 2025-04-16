@@ -7,7 +7,6 @@ export class FElement{
         else{
             this.element = type;
         }
-        
         for(var i in children){
             this.element.appendChild(children[i].element);
         }

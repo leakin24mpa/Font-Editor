@@ -1,4 +1,4 @@
-import { BUTTON, FEli, FEp, FEul, P } from "../htmltools.js";
+import { BUTTON, FEli, FEp, FEul, P } from "../lib/htmltools.js";
 
 class FEcounter extends FEli{
     counter: number;

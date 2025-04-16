@@ -2,7 +2,7 @@ import { FEcounterlist } from "./components/counterList.js";
 import { FEpointPlot } from "./components/draggablePointPlot.js";
 import { FEpinput } from "./components/Pinput.js";
 import { FEgameInfoList } from "./components/publicGameList.js";
-import { DIV, INPUT, P, SetDocumentContent } from "./htmltools.js";
+import { DIV, INPUT, P, SetDocumentContent } from "./lib/htmltools.js";
 
 SetDocumentContent(
     DIV(
@@ -13,5 +13,5 @@ SetDocumentContent(
     new FEcounterlist(4),
     new FEpinput(6, "Join"),
     INPUT().withAttributes({type: "checkbox"}),
-    new FEpointPlot()
+    new FEpointPlot(5)
 )

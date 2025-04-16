@@ -1,4 +1,4 @@
-import { BUTTON, FEform, FEinput, P } from "../htmltools.js";
+import { BUTTON, FEform, FEinput, P } from "../lib/htmltools.js";
 
 export class FEpindigit extends FEinput{
     constructor(){
