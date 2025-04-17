@@ -47,7 +47,7 @@ export class FEpointPlot extends FEdragRegion(FESVG){
             let p = this.getVisualPositions();
             let data = `M ${p[0].x} ${p[0].y}`
             for(let i = 1; i < p.length; i+= 2){
-                data += `Q ${p[i].x} ${p[i].y} ${p[i + 1].x} ${p[i + 1].y}`
+                data += ` Q ${p[i].x} ${p[i].y} ${p[i + 1].x} ${p[i + 1].y}`
             }
             bezierPath.setData(data);
         }

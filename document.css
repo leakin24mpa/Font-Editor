@@ -2,3 +2,15 @@
     width: 400px;
     height: 400px;
 }
+.path-point{
+    fill:rgb(158, 43, 43);
+
+}
+.control-point{
+    fill:  rgb(69, 69, 152);
+}
+.implied-point{
+    fill: transparent;
+    stroke-width: 2;
+    stroke: rgb(158, 43, 43);
+}
