@@ -1,10 +1,11 @@
 .point-plot, .point-plot-container, .point-group{
     width: 400px;
     height: 400px;
+    background-color: rgb(38, 34, 34);
 }
 .path-point{
     fill:rgb(158, 43, 43);
-
+    
 }
 .control-point{
     fill:  rgb(69, 69, 152);
@@ -13,4 +14,10 @@
     fill: transparent;
     stroke-width: 2;
     stroke: rgb(158, 43, 43);
+}
+.character-outline{
+    fill: rgb(27, 92, 25);
+    stroke-width: 2px;
+    stroke-linejoin: round;
+    stroke: rgb(113, 184, 75);
 }
