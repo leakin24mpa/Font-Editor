@@ -3,8 +3,8 @@
 export interface Draggable{
     x: number;
     y: number;
-    visualx: number;
-    visualy: number;
+    px: number;
+    py: number;
     duringDrag(mouseDeltaX: number, mouseDeltaY: number): void;
     completeDrag(mouseDeltaX: number, mouseDeltaY: number): void;
 }

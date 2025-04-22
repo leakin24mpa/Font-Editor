@@ -14,16 +14,23 @@ export function FEdragRegion<T extends new (...args: any) => FElement>(base: T) 
     return class FEdragRegion extends base {
         controller: DragController;
         draggables: DraggableFElement[];
+        filterCoordinates: Function;
         getChildrenPositions: Function;
         getVisualPositions: Function;
         onDragEnd: Function;
         whileDragging: Function;
-        private completeDrag(mouseEvent){
-            this.controller.endDrag(mouseEvent.offsetX, mouseEvent.offsetY);
+        private getCoords(e){
+            if(this.filterCoordinates){
+                return this.filterCoordinates(e.offsetX,e.offsetY);
+            }
+            return {x: e.offsetX, y: e.offsetY};
+        }
+        private completeDrag(mousePosition){
+            this.controller.endDrag(mousePosition.x, mousePosition.y);
             this.onDragEnd();
         }
-        private updateDrag(mouseEvent){
-            this.controller.updateDrag(mouseEvent.offsetX, mouseEvent.offsetY);
+        private updateDrag(mousePosition){
+            this.controller.updateDrag(mousePosition.x, mousePosition.y);
             this.whileDragging();
         }
         constructor(...args: any){
@@ -31,9 +38,9 @@ export function FEdragRegion<T extends new (...args: any) => FElement>(base: T) 
             this.controller = new DragController();
             this.onDragEnd = () => {};
             this.whileDragging = () => {};
-            this.onEvent("mouseup", (e) => this.completeDrag(e));
-            this.onEvent("mouseleave", (e) => this.completeDrag(e));
-            this.onEvent("mousemove", (e) => this.updateDrag(e));
+            this.onEvent("mouseup", (e) => this.completeDrag(this.getCoords(e)));
+            this.onEvent("mouseleave", (e) => this.completeDrag(this.getCoords(e)));
+            this.onEvent("mousemove", (e) => this.updateDrag(this.getCoords(e)));
             
         
         }
@@ -42,14 +49,15 @@ export function FEdragRegion<T extends new (...args: any) => FElement>(base: T) 
                 let child = children[i];
                 child.onEvent("mousedown", (e) =>{
                     this.controller.select(child);
-                    this.controller.beginDrag(e.offsetX, e.offsetY);
+                    let fc = this.getCoords(e);
+                    this.controller.beginDrag(fc.x, fc.y);
                 })
             }
             this.getChildrenPositions = () => {
                 return children.map((c) => {return {x: c.x, y: c.y}})
             }
             this.getVisualPositions = () => {
-                return children.map((c) => {return {x: c.visualx, y: c.visualy}})
+                return children.map((c) => {return {x: c.px, y: c.py}})
             }
         }
     }

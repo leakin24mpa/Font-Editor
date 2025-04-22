@@ -1,3 +1,4 @@
+import { Transform2d } from "../lib/transformtools.js";
 
 
 function isBitSet(flag: number, index: number): boolean{
@@ -58,9 +59,9 @@ interface FontCharMap{
     language: number;
 }
 
-interface GlyphPoint{
-    x: number;
-    y: number;
+export interface GlyphPoint{
+    px: number;
+    py: number;
     isOnCurve: boolean;
     isImplied: boolean;
     isEndpoint: boolean;
@@ -80,7 +81,7 @@ export interface Glyph{
 export interface CompoundGlyph{
     isCompound: true;
     bounds: {min: {x: number; y: number;}; max: {x: number; y: number;};};
-    components: {index: number, transformation: {a: number, b: number, c: number, d: number, e: number, f: number}}[];
+    components: {index: number, transform: Transform2d}[];
 
 }
 export class FontReader extends BinaryReader{
@@ -162,19 +163,42 @@ export class FontReader extends BinaryReader{
         
     }
     readCompoundGlyph(bounds): CompoundGlyph{
+        let glyph: CompoundGlyph = {isCompound: true, bounds: bounds, components: []}
         let moreToRead = true;
         let nComponents = 0;
         while(moreToRead){
             nComponents++;
             let flag = this.readUint16();
             moreToRead = isBitSet(flag, 5);
-            let index = this.readUint16();
+            
+            let args1and2arewords = isBitSet(flag, 0);
             let hasScale = isBitSet(flag, 3);
             let hasXYscale = isBitSet(flag, 6);
             let has2x2 = isBitSet(flag, 7);
-            
+
+            let arg1, arg2;
+
+            let index = this.readUint16();
+            if(args1and2arewords){
+                arg1 = this.readInt16();
+                arg2 = this.readInt16();
+            }
+            else{
+                arg1 = this.readByte();
+                arg2 = this.readByte();
+            }
+            if(hasScale){
+                this.skipForward(4);
+            }
+            else if(hasXYscale){
+                this.skipForward(8);
+            }
+            else if(has2x2){
+                this.skipForward(16);
+            }
+            glyph.components.push({index: index, transform: Transform2d.nothing()})
         }
-        return {isCompound: true, bounds: bounds, components: []}
+        return glyph;
     }
     readSimpleGlyph(nContours, bounds){
         let endpoints = [];
@@ -219,7 +243,7 @@ export class FontReader extends BinaryReader{
                 //if there are two off-curve points in a row, then there is an implied third point on the curve between them
                 let x = (data.xCoordinates[i - 1] + data.xCoordinates[i]) * 0.5;
                 let y = (data.yCoordinates[i - 1] + data.yCoordinates[i]) * 0.5;
-                glyph.points.push({ x: x, y: y, isOnCurve: true, isImplied: true, isEndpoint: false});
+                glyph.points.push({ px: x, py: y, isOnCurve: true, isImplied: true, isEndpoint: false});
             }
             let isEndpoint = false;
             if(i == endpoints[nextEndpointIdx]){
@@ -227,7 +251,7 @@ export class FontReader extends BinaryReader{
                 isEndpoint = true;
             }
             isOnCurve = isBitSet(data.flags[i],0);
-            glyph.points.push({ x:data.xCoordinates[i], y: data.yCoordinates[i], isOnCurve: isOnCurve, isImplied: false, isEndpoint: isEndpoint});
+            glyph.points.push({ px:data.xCoordinates[i], py: data.yCoordinates[i], isOnCurve: isOnCurve, isImplied: false, isEndpoint: isEndpoint});
         }
         return glyph;
     }

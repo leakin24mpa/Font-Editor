@@ -1,23 +1,30 @@
-.point-plot, .point-plot-container, .point-group{
-    width: 400px;
-    height: 400px;
+.point-plot, .point-group{
     background-color: rgb(38, 34, 34);
 }
 .path-point{
     fill:rgb(158, 43, 43);
+    r: 15;
     
 }
 .control-point{
     fill:  rgb(69, 69, 152);
+    r: 15;
 }
 .implied-point{
     fill: transparent;
-    stroke-width: 2;
+    stroke-width: 10;
     stroke: rgb(158, 43, 43);
 }
 .character-outline{
     fill: rgb(27, 92, 25);
-    stroke-width: 2px;
+    stroke-width: 10px;
     stroke-linejoin: round;
     stroke: rgb(113, 184, 75);
+}
+
+.glyph{
+    fill: rgb(135, 85, 44);
+    stroke-width: 10px;
+    stroke-linejoin: round;
+    stroke: rgb(220, 120, 39);
 }

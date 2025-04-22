@@ -25,7 +25,7 @@ let loadPage = (fontfilebuffer: ArrayBuffer) => {
         // new FEcounterlist(4),
         // new FEpinput(6, "Join"),
         // INPUT().withAttributes({type: "checkbox"}),
-        ...multiElement(100, (i) => createGlyphEditor(reader.readGlyph(i + 20))),
+        ...multiElement(100, (i) => createGlyphEditor(reader, reader.readGlyph(i + 20))),
         
 
     )

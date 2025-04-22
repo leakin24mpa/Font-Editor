@@ -11,25 +11,25 @@ function randomCoord(){
 class DraggablePoint extends SVGCircle implements Draggable{
     x: number;
     y: number;
-    visualx: number;
-    visualy: number;
+    px: number;
+    py: number;
     constructor(x,y,radius ){
         super(x,y,radius);
         this.x = x;
         this.y = y;
-        this.visualx = x;
-        this.visualy = y;
+        this.px = x;
+        this.py = y;
     }
     duringDrag(mouseDeltaX: number, mouseDeltaY: number): void {
-        this.visualx = mouseDeltaX + this.x;
-        this.visualy = mouseDeltaY + this.y;
-        this.setPosition(this.visualx, this.visualy);
+        this.px = mouseDeltaX + this.x;
+        this.py = mouseDeltaY + this.y;
+        this.setPosition(this.px, this.py);
     }
     completeDrag(mouseDeltaX: number, mouseDeltaY: number): void {
         this.x += mouseDeltaX;
         this.y += mouseDeltaY;
-        this.visualx = this.x;
-        this.visualy = this.y;
+        this.px = this.x;
+        this.py = this.y;
         this.setPosition(this.x, this.y);
     }
 }
