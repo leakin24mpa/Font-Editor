@@ -39,6 +39,15 @@ export class Transform2d{
             other.a * this.e + other.c * this.f + other.e,
             other.b * this.e + other.d * this.f + other.f)
     }
+    composeWith(other: Transform2d){
+            this.a = other.a * this.a + other.c * this.b
+            this.b = other.b * this.a + other.d * this.b
+            this.c = other.a * this.c + other.c * this.d
+            this.d = other.b * this.c + other.d * this.d
+            this.e = other.a * this.e + other.c * this.f + other.e
+            this.f = other.b * this.e + other.d * this.f + other.f
+            return this;
+    }
     inverse():Transform2d{
        /*([ a c e ]
           [ b d f ]

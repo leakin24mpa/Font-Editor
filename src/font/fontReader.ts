@@ -26,6 +26,9 @@ class BinaryReader{
         this.byteIdx += 4;
         return this.dataview.getUint32(this.byteIdx - 4, false);
     }
+    readInt2_14(){
+        return this.readInt16() / 16384.0;
+    }
     readString(length){
         let str = "";
         for(let i = 0; i < length; i++){
@@ -88,6 +91,7 @@ export class FontReader extends BinaryReader{
     directory: FontDirectory;
     cmapdirectory: CMapDirectory;
     glyphLocations: number[];
+    unitsPerEm: number;
     constructor(arraybuffer: ArrayBuffer){
         super(arraybuffer)
         this.goTo(4);
@@ -104,6 +108,11 @@ export class FontReader extends BinaryReader{
         }
         this.prepareCmap();
         this.createGlyphMap();
+        this.goTo(this.directory["head"].location);
+        this.skipForward(18);
+        
+        this.unitsPerEm = this.readUint16();
+        console.log(`units per em: ${this.unitsPerEm}`);
     }
     verifyEntry(tag){
         let entry = this.directory[tag];
@@ -172,6 +181,7 @@ export class FontReader extends BinaryReader{
             moreToRead = isBitSet(flag, 5);
             
             let args1and2arewords = isBitSet(flag, 0);
+            let argsAreXY = isBitSet(flag, 1);
             let hasScale = isBitSet(flag, 3);
             let hasXYscale = isBitSet(flag, 6);
             let has2x2 = isBitSet(flag, 7);
@@ -187,16 +197,29 @@ export class FontReader extends BinaryReader{
                 arg1 = this.readByte();
                 arg2 = this.readByte();
             }
+            let transform = Transform2d.nothing();
+            if(argsAreXY){
+                transform = Transform2d.translation(arg1, arg2);
+            }
             if(hasScale){
-                this.skipForward(4);
+                transform.composeWith(Transform2d.scale(this.readInt2_14()))
+                //this.skipForward(4);
             }
             else if(hasXYscale){
-                this.skipForward(8);
+                transform.composeWith(Transform2d.scaleXY(this.readInt2_14(), this.readInt2_14()))
+                //this.skipForward(8);
             }
             else if(has2x2){
-                this.skipForward(16);
+                transform.composeWith(
+                    new Transform2d(
+                        this.readInt2_14(), 
+                        this.readInt2_14(),
+                        this.readInt2_14(),
+                        this.readInt2_14(),
+                        0, 0));
+                //this.skipForward(16);
             }
-            glyph.components.push({index: index, transform: Transform2d.nothing()})
+            glyph.components.push({index: index, transform})
         }
         return glyph;
     }

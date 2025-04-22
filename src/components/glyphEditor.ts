@@ -129,12 +129,12 @@ export function createGlyphEditor(reader: FontReader, data: Glyph | CompoundGlyp
         return new FEcompoundGlyphEditor(reader, data);
     }
     else{
-        return new FEglyphEditor(data as Glyph);
+        return new FEglyphEditor(reader, data as Glyph);
     }
 }
 export class FEglyphEditor extends FEdragRegion(FESVG){
     endpoints: number[];
-    constructor(data: Glyph){
+    constructor(reader: FontReader, data: Glyph){
         let bezierPath = PATH("M 100 100 Q 200 200 300 100");
         console.log(data);
         
@@ -143,7 +143,7 @@ export class FEglyphEditor extends FEdragRegion(FESVG){
             let p = data.points[i];
             points.push(new DraggablePoint(p.px, p.py, p.isOnCurve, p.isImplied, p.isEndpoint));
         }
-        let scale = Math.max(data.bounds.max.x - data.bounds.min.x, data.bounds.max.y - data.bounds.min.y);
+        let scale = reader.unitsPerEm; //Math.max(data.bounds.max.x - data.bounds.min.x, data.bounds.max.y - data.bounds.min.y);
         let transform = Transform2d.translation(-data.bounds.min.x, -data.bounds.min.y).then(Transform2d.scaleXY(1/scale, -1/scale)).then(Transform2d.translation(0,1));
         super(
             GROUP(
@@ -174,7 +174,7 @@ export class FEcompoundGlyphEditor extends FEdragRegion(FESVG){
             }
             paths.push(new DraggableGlyph(glyph as Glyph, data.components[i].transform));
         }
-        let scale = Math.max(data.bounds.max.x - data.bounds.min.x, data.bounds.max.y - data.bounds.min.y);
+        let scale = reader.unitsPerEm; //Math.max(data.bounds.max.x - data.bounds.min.x, data.bounds.max.y - data.bounds.min.y);
         let transform = Transform2d.translation(-data.bounds.min.x, -data.bounds.min.y).then(Transform2d.scaleXY(1/scale, -1/scale)).then(Transform2d.translation(0,1));
         super(
             GROUP(

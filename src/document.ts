@@ -7,7 +7,7 @@ import { FontReader } from "./font/fontReader.js";
 import { multiElement } from "./lib/domtools.js";
 import { DIV, INPUT, P, SetDocumentContent } from "./lib/htmltools.js";
 
-fetch("Comic Sans MS Bold.ttf").then((response) => response.arrayBuffer().then((response) => loadPage(response)));
+fetch("Georgia Bold.ttf").then((response) => response.arrayBuffer().then((response) => loadPage(response)));
 
 let loadPage = (fontfilebuffer: ArrayBuffer) => {
     let reader = new FontReader(fontfilebuffer);
@@ -25,7 +25,7 @@ let loadPage = (fontfilebuffer: ArrayBuffer) => {
         // new FEcounterlist(4),
         // new FEpinput(6, "Join"),
         // INPUT().withAttributes({type: "checkbox"}),
-        ...multiElement(100, (i) => createGlyphEditor(reader, reader.readGlyph(i + 20))),
+        ...multiElement(200, (i) => createGlyphEditor(reader, reader.readGlyph(i))),
         
 
     )
