@@ -29,38 +29,45 @@ class BinaryReader{
     readInt2_14(){
         return this.readInt16() / 16384.0;
     }
-    readString(length){
+    readString(length: number){
         let str = "";
         for(let i = 0; i < length; i++){
             str += String.fromCharCode(this.readByte());
         }
         return str;
     }
-    goTo(byte){
+    readFixed16_16(){
+        let val = this.readUint32();
+        let i = val >> 16;
+        let f = (val & 0xFFFF) / 65536;
+        return i + f;
+    }
+    readFloat64(){
+        let f = this.dataview.getFloat64(this.byteIdx, false);
+        this.byteIdx += 8;
+        return f;
+
+    }
+    goTo(byte: number){
         this.byteIdx = byte;
     }
     skipForward(bytes){
         this.byteIdx += bytes;
     }
 }
-interface FontTableInfo{
-    tag: string;
+export interface FontTableInfo{
     sum: number;
     location: number;
     length: number;
 }
-type FontDirectory = {
+export type FontDirectory = {
     [tag: string]: FontTableInfo;
 }
 
-type CMapDirectory = {
-    [id: number]: {pid: number, psid: number, offset: number, map: FontCharMap}
-}
-interface FontCharMap{
-    format: number;
-    length: number;
-    language: number;
-}
+export type CharacterIndexMap = {
+    [unicodeId: number]: number;
+};
+
 
 export interface GlyphPoint{
     px: number;
@@ -69,14 +76,9 @@ export interface GlyphPoint{
     isImplied: boolean;
     isEndpoint: boolean;
 }
-interface GlyphData{
-    xCoordinates: number[];
-    yCoordinates: number[];
-    flags: number[];
-}
-export interface Glyph{
+export interface SimpleGlyph{
     isCompound: false;
-    bounds: {min: {x: number; y: number;}; max: {x: number; y: number;};}
+    bounds: Bounds;
     pointCount: number;
     contourCount: number;
     points: GlyphPoint[];
@@ -87,80 +89,29 @@ export interface CompoundGlyph{
     components: {index: number, transform: Transform2d}[];
 
 }
+export type Glyph = SimpleGlyph | CompoundGlyph;
+
+export interface Bounds{
+    min: {x: number; y: number;}; 
+    max: {x: number; y: number;};
+}
 export class FontReader extends BinaryReader{
-    directory: FontDirectory;
-    cmapdirectory: CMapDirectory;
-    glyphLocations: number[];
-    unitsPerEm: number;
+    goToTable(table: FontTableInfo){
+        this.goTo(table.location);
+    }
     constructor(arraybuffer: ArrayBuffer){
-        super(arraybuffer)
-        this.goTo(4);
-        let tableCount = this.readUint16();
-        this.skipForward(6);
-        this.directory = {};
-        for(let i = 0; i < tableCount; i++){
-            let tag = this.readString(4);
-            let sum = this.readUint32();
-            let location = this.readUint32();
-            let length = this.readUint32();
-
-            this.directory[tag] = {tag: tag, sum: sum, location: location, length: length};
-        }
-        this.prepareCmap();
-        this.createGlyphMap();
-        this.goTo(this.directory["head"].location);
-        this.skipForward(18);
-        
-        this.unitsPerEm = this.readUint16();
-        console.log(`units per em: ${this.unitsPerEm}`);
+        super(arraybuffer);
     }
-    verifyEntry(tag){
-        let entry = this.directory[tag];
-        this.goTo(entry.location);
-        let sum = 0;
-        for(let i = 0; i < ((entry.length + 3) & ~3); i += 4){
-            sum = (sum + this.readUint32()) >>> 0;
-        }
-        console.log(`verifying entry "${tag}", expected sum: ${entry.sum}, calculated sum: ${sum}`);
-    }
-    prepareCmap(){
-        let entry = this.directory["cmap"];
-        this.goTo(entry.location);
-        this.readUint16()
-        let subtableCount = this.readUint16();
-        this.cmapdirectory = {};
-
-        for(let i = 0; i < subtableCount; i++){
-            let platformId = this.readUint16();
-            let platformSpecificID = this.readUint16();
-            let offset = this.readUint32();
-            this.cmapdirectory[i] = {pid: platformId, psid: platformSpecificID, offset: offset, map: null};
-        }
-        for(var i in this.cmapdirectory){
-            this.goTo(entry.location + this.cmapdirectory[i].offset);
-            let format = this.readUint16();
-            let length = this.readUint16();
-            let language = this.readUint16();
-            let map: FontCharMap = {format: format, length: length, language: language}
-            this.cmapdirectory[i].map = map;
-        }
-    }
-    readGlyph(index: number): Glyph | CompoundGlyph{
-        this.goTo(this.glyphLocations[index]);
+     
+    readGlyph(): Glyph{
         let nContours = this.readInt16();
-        console.log("contour-count: " + nContours);
         let isCompound = nContours < 0;
-        if(isCompound){
-            console.log("compound glyph!");
-            nContours *= -1;
-        }
 
         let xMin = this.readInt16();
         let yMin = this.readInt16();
         let xMax = this.readInt16();
         let yMax = this.readInt16();
         let bounds = {min: {x: xMin, y: yMin}, max: {x: xMax, y: yMax}};
-        console.log(`bounds: minimum - (${xMin}, ${yMin})  maximum - (${xMax}, ${yMax})`);
 
         if(isCompound){
             return this.readCompoundGlyph(bounds);
@@ -228,12 +179,11 @@ export class FontReader extends BinaryReader{
         for(let i = 0;i < nContours; i++){
             endpoints.push(this.readUint16());
         }
-        console.log(`contour endpoints: ${endpoints}`);
         let instructionCount = this.readUint16();
         for(let i = 0; i < instructionCount; i++){
             this.readByte();
         }
-        let data: GlyphData = {flags: [], xCoordinates: [], yCoordinates: []};
+        let flags = [], xCoordinates = [], yCoordinates = [];
         let nPoints = endpoints[endpoints.length - 1] + 1;
         let repeat = 0;
         let flag;
@@ -247,10 +197,10 @@ export class FontReader extends BinaryReader{
                     repeat = this.readByte();
                 }
             }
-            data.flags.push(flag);
+            flags.push(flag);
         }
-        data.xCoordinates = this.readCoordinates(data.flags, nPoints, 1, 4);
-        data.yCoordinates = this.readCoordinates(data.flags, nPoints, 2, 5);
+        xCoordinates = this.readCoordinates(flags, nPoints, 1, 4);
+        yCoordinates = this.readCoordinates(flags, nPoints, 2, 5);
 
         let glyph: Glyph = {
             isCompound: false,
@@ -262,10 +212,10 @@ export class FontReader extends BinaryReader{
         let isOnCurve = true;
         let nextEndpointIdx = 0;
         for(let i = 0; i < nPoints; i++){
-            if(!isOnCurve && !isBitSet(data.flags[i],0)){
+            if(!isOnCurve && !isBitSet(flags[i],0)){
                 //if there are two off-curve points in a row, then there is an implied third point on the curve between them
-                let x = (data.xCoordinates[i - 1] + data.xCoordinates[i]) * 0.5;
-                let y = (data.yCoordinates[i - 1] + data.yCoordinates[i]) * 0.5;
+                let x = (xCoordinates[i - 1] + xCoordinates[i]) * 0.5;
+                let y = (yCoordinates[i - 1] + yCoordinates[i]) * 0.5;
                 glyph.points.push({ px: x, py: y, isOnCurve: true, isImplied: true, isEndpoint: false});
             }
             let isEndpoint = false;
@@ -273,8 +223,8 @@ export class FontReader extends BinaryReader{
                 nextEndpointIdx++;
                 isEndpoint = true;
             }
-            isOnCurve = isBitSet(data.flags[i],0);
-            glyph.points.push({ px:data.xCoordinates[i], py: data.yCoordinates[i], isOnCurve: isOnCurve, isImplied: false, isEndpoint: isEndpoint});
+            isOnCurve = isBitSet(flags[i],0);
+            glyph.points.push({ px:xCoordinates[i], py: yCoordinates[i], isOnCurve: isOnCurve, isImplied: false, isEndpoint: isEndpoint});
         }
         return glyph;
     }
@@ -303,31 +253,6 @@ export class FontReader extends BinaryReader{
             coords.push(x);
         }
         return coords;
-    }
-    createGlyphMap(){
-        this.goTo(this.directory["maxp"].location);
-        this.skipForward(4);
-        let glyphCount = this.readUint16();
-
-        this.goTo(this.directory["head"].location);
-        this.skipForward(50);
-
-        let isShortEntries = this.readUint16() == 0;
-        let glyphTableLocation = this.directory["glyf"].location;
-        this.glyphLocations = [];
-
-        this.goTo(this.directory["loca"].location);
-        for(let i = 0; i < glyphCount; i++){
-            let offset;
-            if(isShortEntries){
-                offset = 2 * this.readUint16();
-            }
-            else{
-                offset = this.readUint32();
-            }
-            this.glyphLocations.push(glyphTableLocation + offset);
-        }
-        console.log(this.glyphLocations);
     }
 
 }

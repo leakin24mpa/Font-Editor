@@ -1,4 +1,5 @@
-import { CompoundGlyph, FontReader, Glyph, GlyphPoint } from "../font/fontReader.js";
+import { Font } from "../font/font.js";
+import { CompoundGlyph, GlyphPoint, SimpleGlyph } from "../font/fontReader.js";
 import { FEdragRegion } from "../lib/domtools.js";
 import { Draggable } from "../lib/draggable.js";
 import { FESVG, GROUP, PATH, SVGCircle, SVGPath } from "../lib/svgtools.js";
@@ -98,7 +99,7 @@ class DraggableGlyph extends SVGPath implements Draggable{
         this.transform.f = this.py;
         this.withAttributes({transform: this.transform.toSvgString()});
     }
-    constructor(glyph: Glyph, transform: Transform2d){
+    constructor(glyph: SimpleGlyph, transform: Transform2d){
         super(GlyphToSvgPathData(glyph.points, transform));
         this.withClass("glyph");
 
@@ -124,26 +125,26 @@ class DraggableGlyph extends SVGPath implements Draggable{
     }
     
 }
-export function createGlyphEditor(reader: FontReader, data: Glyph | CompoundGlyph): FEglyphEditor | FEcompoundGlyphEditor{
-    if(data.isCompound){
-        return new FEcompoundGlyphEditor(reader, data);
+export function createGlyphEditor(font: Font, index: number): FEglyphEditor | FEcompoundGlyphEditor{
+    let glyph = font.glyphs[index];
+    if(glyph.isCompound){
+        return new FEcompoundGlyphEditor(font, glyph);
     }
     else{
-        return new FEglyphEditor(reader, data as Glyph);
+        return new FEglyphEditor(font, glyph as SimpleGlyph);
     }
 }
 export class FEglyphEditor extends FEdragRegion(FESVG){
     endpoints: number[];
-    constructor(reader: FontReader, data: Glyph){
+    constructor(font: Font, data: SimpleGlyph){
         let bezierPath = PATH("M 100 100 Q 200 200 300 100");
-        console.log(data);
         
         let points = [];
         for(let i = 0; i < data.points.length; i++){
             let p = data.points[i];
             points.push(new DraggablePoint(p.px, p.py, p.isOnCurve, p.isImplied, p.isEndpoint));
         }
-        let scale = reader.unitsPerEm;
+        let scale = font.head.unitsPerEm;
         let transform = Transform2d.scaleXY(1/scale, -1/scale).then(Transform2d.translation(0,1)); 
         super(
             PATH(`M 0 0 L 0 1 L 1 1 L 1 0 Z`).withClass("emsquare"),
@@ -166,16 +167,16 @@ export class FEglyphEditor extends FEdragRegion(FESVG){
     }
 }
 export class FEcompoundGlyphEditor extends FEdragRegion(FESVG){
-    constructor(reader: FontReader, data: CompoundGlyph){
+    constructor(font: Font, data: CompoundGlyph){
         let paths: DraggableGlyph[] = [];
         for(var i in data.components){
-            let glyph = reader.readGlyph(data.components[i].index);
+            let glyph = font.glyphs[data.components[i].index];
             if(glyph.isCompound){
                 throw "Recursive Compound Glyph!!! (not implemented yet)"
             }
-            paths.push(new DraggableGlyph(glyph as Glyph, data.components[i].transform));
+            paths.push(new DraggableGlyph(glyph as SimpleGlyph, data.components[i].transform));
         }
-        let scale = reader.unitsPerEm;
+        let scale = font.head.unitsPerEm;
         let transform = Transform2d.scaleXY(1/scale, -1/scale).then(Transform2d.translation(0,1));
         super(
             PATH(`M 0 0 L 0 1 L 1 1 L 1 0 Z`).withClass("emsquare"),

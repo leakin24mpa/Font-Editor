@@ -3,6 +3,7 @@ import { FEpointPlot } from "./components/draggablePointPlot.js";
 import { createGlyphEditor, FEglyphEditor } from "./components/glyphEditor.js";
 import { FEpinput } from "./components/Pinput.js";
 import { FEgameInfoList } from "./components/publicGameList.js";
+import { Font } from "./font/font.js";
 import { FontReader } from "./font/fontReader.js";
 import { multiElement } from "./lib/domtools.js";
 import { DIV, INPUT, P, SetDocumentContent } from "./lib/htmltools.js";
@@ -10,12 +11,8 @@ import { DIV, INPUT, P, SetDocumentContent } from "./lib/htmltools.js";
 fetch("Georgia Bold.ttf").then((response) => response.arrayBuffer().then((response) => loadPage(response)));
 
 let loadPage = (fontfilebuffer: ArrayBuffer) => {
-    let reader = new FontReader(fontfilebuffer);
-
-    console.log(reader.directory);
-    console.log(reader.cmapdirectory);
-
-    reader.goTo(reader.directory["glyf"].location);
+    let font = new Font(fontfilebuffer);
+    console.log(font);
     SetDocumentContent(
         // DIV(
         //     P().says("hello world")
@@ -25,7 +22,7 @@ let loadPage = (fontfilebuffer: ArrayBuffer) => {
         // new FEcounterlist(4),
         // new FEpinput(6, "Join"),
         // INPUT().withAttributes({type: "checkbox"}),
-        ...multiElement(200, (i) => createGlyphEditor(reader, reader.readGlyph(i))),
+        ...multiElement(200, (i) => createGlyphEditor(font, i)),
         
 
     )
