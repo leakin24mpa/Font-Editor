@@ -143,9 +143,10 @@ export class FEglyphEditor extends FEdragRegion(FESVG){
             let p = data.points[i];
             points.push(new DraggablePoint(p.px, p.py, p.isOnCurve, p.isImplied, p.isEndpoint));
         }
-        let scale = reader.unitsPerEm; //Math.max(data.bounds.max.x - data.bounds.min.x, data.bounds.max.y - data.bounds.min.y);
-        let transform = Transform2d.translation(-data.bounds.min.x, -data.bounds.min.y).then(Transform2d.scaleXY(1/scale, -1/scale)).then(Transform2d.translation(0,1));
+        let scale = reader.unitsPerEm;
+        let transform = Transform2d.scaleXY(1/scale, -1/scale).then(Transform2d.translation(0,1)); 
         super(
+            PATH(`M 0 0 L 0 1 L 1 1 L 1 0 Z`).withClass("emsquare"),
             GROUP(
                 bezierPath.withClass("character-outline"),
                 GROUP(...points)
@@ -157,7 +158,7 @@ export class FEglyphEditor extends FEdragRegion(FESVG){
         };
         this.filterCoordinates(0, 0);
         this.addDraggableChildren(...points)
-        this.withClass("point-plot").withAttributes({width: 400, height: 400, viewBox: `0 0 1 1`});
+        this.withClass("point-plot").withAttributes({width: 400, height: 400, viewBox: `-0.5 -0.5 2 2`});
         this.whileDragging = () => {
             bezierPath.setData(GlyphToSvgPathData(points, transform));
         }
@@ -174,9 +175,10 @@ export class FEcompoundGlyphEditor extends FEdragRegion(FESVG){
             }
             paths.push(new DraggableGlyph(glyph as Glyph, data.components[i].transform));
         }
-        let scale = reader.unitsPerEm; //Math.max(data.bounds.max.x - data.bounds.min.x, data.bounds.max.y - data.bounds.min.y);
-        let transform = Transform2d.translation(-data.bounds.min.x, -data.bounds.min.y).then(Transform2d.scaleXY(1/scale, -1/scale)).then(Transform2d.translation(0,1));
+        let scale = reader.unitsPerEm;
+        let transform = Transform2d.scaleXY(1/scale, -1/scale).then(Transform2d.translation(0,1));
         super(
+            PATH(`M 0 0 L 0 1 L 1 1 L 1 0 Z`).withClass("emsquare"),
             GROUP(
                 ...paths
             ).withAttributes({transform: transform.toSvgString()})
@@ -185,7 +187,7 @@ export class FEcompoundGlyphEditor extends FEdragRegion(FESVG){
         this.filterCoordinates = (x,y) => {
             return transform.inverse().applyTo({x: x / 400,y: y / 400});
         };
-        this.withClass("point-plot").withAttributes({width: 400, height: 400, viewBox: "0 0 1 1"});
+        this.withClass("point-plot").withAttributes({width: 400, height: 400, viewBox: "-0.5 -0.5 2 2"});
         this.addDraggableChildren(...paths);
 
     }
