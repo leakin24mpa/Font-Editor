@@ -29,6 +29,10 @@ export class FElement{
         this.element.classList.remove(classname);
         return this;
     }
+    toggleClass(classname: string){
+        this.element.classList.toggle(classname);
+        return this;
+    }
     says(innerHTML: string){
         this.element.textContent = innerHTML;
         return this;
