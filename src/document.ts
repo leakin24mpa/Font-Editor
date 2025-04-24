@@ -1,15 +1,17 @@
 import { FEcarousel } from "./components/carousel.js";
 import { FEcounterlist } from "./components/counterList.js";
 import { FEpointPlot } from "./components/draggablePointPlot.js";
-import { createGlyphEditor, FEglyphEditor } from "./components/glyphEditor.js";
+import { createGlyphEditor, createSVGforGlyph, FEglyphDisplay, FEglyphEditor } from "./components/glyphEditor.js";
 import { FEpinput } from "./components/Pinput.js";
 import { FEgameInfoList } from "./components/publicGameList.js";
+import { FEtreeView } from "./components/treeView.js";
 import { Font } from "./font/font.js";
 import { FontReader } from "./font/fontReader.js";
 import { multiElement } from "./lib/domtools.js";
 import { DIV, INPUT, P, SetDocumentContent } from "./lib/htmltools.js";
+import { SVG } from "./lib/svgtools.js";
 
-fetch("Georgia Bold.ttf").then((response) => response.arrayBuffer().then((response) => loadPage(response)));
+fetch("Comic Sans MS Bold.ttf").then((response) => response.arrayBuffer().then((response) => loadPage(response)));
 
 let loadPage = (fontfilebuffer: ArrayBuffer) => {
     let font = new Font(fontfilebuffer);
@@ -23,8 +25,23 @@ let loadPage = (fontfilebuffer: ArrayBuffer) => {
         // new FEcounterlist(4),
         // new FEpinput(6, "Join"),
         // INPUT().withAttributes({type: "checkbox"}),
-        ...multiElement(200, (i) => createGlyphEditor(font, i)),
+        //...multiElement(200, (i) => createGlyphEditor(font, i)),
+        createGlyphEditor(font, 184),
+        DIV(
+            ...multiElement(font.maxp.numGlyphs, (i) => new FEglyphDisplay(font, i).withClass("glyph-display")),
+        ).withClass("glyph-picker"),
         
+        
+        DIV(
+            new FEtreeView("Comic Sans MS Bold", {
+                Directory: font.directory,
+                Head: font.head,
+                "Max Profile": font.maxp,
+                "Horizontal Header": font.hhea,
+                locations: font.loca,
+                glyph0: font.glyphs[0]
+            })
+        ).withClass("font-data")
 
     )
 }

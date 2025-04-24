@@ -1,8 +1,8 @@
 import { Font } from "../font/font.js";
-import { CompoundGlyph, GlyphPoint, SimpleGlyph } from "../font/fontReader.js";
+import { CompoundGlyph, Glyph, GlyphPoint, SimpleGlyph } from "../font/fontReader.js";
 import { FEdragRegion } from "../lib/domtools.js";
 import { Draggable } from "../lib/draggable.js";
-import { FESVG, GROUP, PATH, SVGCircle, SVGPath } from "../lib/svgtools.js";
+import { FESVG, GROUP, PATH, SVGCircle, SVGElement, SVGPath } from "../lib/svgtools.js";
 import { Transform2d } from "../lib/transformtools.js";
 
 type DraggableGlyphPoint = Draggable & GlyphPoint
@@ -47,7 +47,7 @@ class DraggablePoint extends SVGCircle implements DraggableGlyphPoint{
         this.setPosition(this.x, this.y);
     }
 }
-function GlyphToSvgPathData(points: GlyphPoint[], transform: Transform2d): string{
+function GlyphToSvgPathData(points: GlyphPoint[]): string{
     let isStartPoint = true;
     let contourStartCoordinates = {x: 0, y: 0};
     let data = ''
@@ -88,6 +88,24 @@ function GlyphToSvgPathData(points: GlyphPoint[], transform: Transform2d): strin
     }
     return data;
 }
+export function createSVGforGlyph(font: Font, glyphIndex: number): SVGElement{
+    let glyph = font.glyphs[glyphIndex];
+    if(glyph.isCompound){
+        let children = [];
+        for(let i = 0; i < glyph.components.length; i++){
+            children.push(
+                createSVGforGlyph(font, glyph.components[i].index)
+                .withAttributes({transform: glyph.components[i].transform.toSvgString()})
+            );
+        }
+        return GROUP(
+            ...children
+        )
+    }
+    else{
+        return PATH(GlyphToSvgPathData((glyph as SimpleGlyph).points));
+    }
+}
 class DraggableGlyph extends SVGPath implements Draggable{
     x: number;
     y: number;
@@ -100,7 +118,7 @@ class DraggableGlyph extends SVGPath implements Draggable{
         this.withAttributes({transform: this.transform.toSvgString()});
     }
     constructor(glyph: SimpleGlyph, transform: Transform2d){
-        super(GlyphToSvgPathData(glyph.points, transform));
+        super(GlyphToSvgPathData(glyph.points));
         this.withClass("glyph");
 
         this.transform = transform;
@@ -161,7 +179,7 @@ export class FEglyphEditor extends FEdragRegion(FESVG){
         this.addDraggableChildren(...points)
         this.withClass("point-plot").withAttributes({width: 400, height: 400, viewBox: `-0.5 -0.5 2 2`});
         this.whileDragging = () => {
-            bezierPath.setData(GlyphToSvgPathData(points, transform));
+            bezierPath.setData(GlyphToSvgPathData(points));
         }
         this.whileDragging();
     }
@@ -191,5 +209,19 @@ export class FEcompoundGlyphEditor extends FEdragRegion(FESVG){
         this.withClass("point-plot").withAttributes({width: 400, height: 400, viewBox: "-0.5 -0.5 2 2"});
         this.addDraggableChildren(...paths);
 
+    }
+}
+
+export class FEglyphDisplay extends FESVG{
+    constructor(font: Font, index: number){
+        let scale = font.head.unitsPerEm;
+        let transform = Transform2d.scaleXY(1/scale, -1/scale).then(Transform2d.translation(0,1));
+        super(
+            GROUP(
+                createSVGforGlyph(font, index)
+            ).withAttributes({transform: transform.toSvgString()})
+        );
+        
+        this.withAttributes({width: 100, height:100, viewBox: "0 0 1 1"})
     }
 }

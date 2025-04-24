@@ -1,56 +1,15 @@
-.point-plot, .point-group{
-    background: radial-gradient(
-        rgb(62, 59, 59), 
-        rgb(62, 59, 59) 1px, 
-        rgb(38, 34, 34) 1px
-
-    );
-    background-size: 20px 20px;
-    
+.subtree-container{
+    overflow: hidden;
 }
-.path-point{
-    fill:rgb(158, 43, 43);
-    r: 15;
-    
-}
-.control-point{
-    fill:  rgb(69, 69, 152);
-    r: 15;
-}
-.implied-point{
-    fill: transparent;
-    stroke-width: 10;
-    stroke: rgb(158, 43, 43);
-}
-.character-outline{
-    fill: rgb(27, 92, 25);
-    stroke-width: 10px;
-    stroke-linejoin: round;
-    stroke: rgb(113, 184, 75);
-}
-
-.glyph{
-    fill: rgb(135, 85, 44);
-    stroke-width: 10px;
-    stroke-linejoin: round;
-    stroke: rgb(220, 120, 39);
-}
-.emsquare{
-    fill: transparent;
-    stroke-width: 0.005px;
-    stroke-dasharray: 0.02px 0.01px;
-    stroke: rgb(159, 122, 122);
-}
-
 .subtree{
     margin-left: 5px;
     padding-left: 10px;
     overflow: hidden;
-    height: 0px;
+    height: 0;
     font-family: 'Roboto', sans-serif;
     border-left: 1px solid rgb(213, 213, 213);
 }
-.active{
+.subtree.active{
     height: fit-content;
 }
 .key-value{
@@ -84,10 +43,15 @@
     align-items: center;
     border-bottom: 1px solid rgb(203, 203, 203);
     cursor: pointer;
+    transition: 0.1s ease-in-out;
+}
+.dropdown:hover{
+    border-bottom: 5px solid rgb(120, 202, 114);
+    transition: 0.1s ease-in-out;
 }
 .dropdown::before{
     content: '';
-    background-image: url("src/img/arrow.svg");
+    background-image: url("../img/arrow.svg");
     width: 15px;
     height: 15px;
     margin: 5px;
@@ -95,6 +59,4 @@
 }
 .dropdown.active::before{
     transform: rotate(90deg);
-    
-
 }

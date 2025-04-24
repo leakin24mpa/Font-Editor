@@ -127,9 +127,7 @@ export class Font{
                 platformSpecificID: reader.readUint16(), 
                 location: directory.cmap.location + reader.readUint32(), 
                 map: null};
-            if(table.platformID == 0){ //look for the unicode encoding;
-                subtables.push(table);
-            }
+            subtables.push(table);
         }
         if(subtables.length == 0){
             throw new Error("The font does not have a unicode cmap table");

@@ -30,9 +30,11 @@ export class FEtreeView extends FEdiv{
         for(var key in object){
             children.push(createTreeView(key, object[key]));
         }
-        content = DIV(
-            ...children
-        ).withClass("subtree");
+        content = 
+            DIV(
+                ...children
+            ).withClass("subtree")
+        
         let button = DIV().says(name).withClass("dropdown").onEvent("click", () => {
             content.toggleClass("active");
             button.toggleClass("active");
@@ -41,7 +43,9 @@ export class FEtreeView extends FEdiv{
         super(
             
             button,
-            content
+            DIV(content).withClass("subtree-container")
+
+            
         )
         this.withClass("treeView");
     }
