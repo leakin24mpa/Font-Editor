@@ -1,3 +1,4 @@
+import { FEcarousel } from "./components/carousel.js";
 import { FEcounterlist } from "./components/counterList.js";
 import { FEpointPlot } from "./components/draggablePointPlot.js";
 import { createGlyphEditor, FEglyphEditor } from "./components/glyphEditor.js";
