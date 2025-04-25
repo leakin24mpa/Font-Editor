@@ -26,6 +26,7 @@ export function FEdragRegion<T extends new (...args: any) => FElement>(base: T) 
             return {x: e.offsetX, y: e.offsetY};
         }
         private completeDrag(mousePosition){
+            (this.controller.selectedElement as any).removeClass("selected");
             this.controller.endDrag(mousePosition.x, mousePosition.y);
             this.onDragEnd();
         }
@@ -49,6 +50,7 @@ export function FEdragRegion<T extends new (...args: any) => FElement>(base: T) 
                 let child = children[i];
                 child.onEvent("mousedown", (e) =>{
                     this.controller.select(child);
+                    child.withClass("selected")
                     let fc = this.getCoords(e);
                     this.controller.beginDrag(fc.x, fc.y);
                 })

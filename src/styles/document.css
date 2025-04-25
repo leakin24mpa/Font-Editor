@@ -1,3 +1,12 @@
+@font-face{
+    font-family: "Cascadia Mono";
+    src: url(../../CascadiaMono-VariableFont_wght.ttf);
+}
+body{
+    background-color: rgb(8, 8, 12);
+    font-family: "Cascadia Mono";
+}
+
 .point-plot, .point-group{
     background: radial-gradient(
         rgb(62, 59, 59), 
@@ -11,7 +20,6 @@
 .path-point{
     fill:rgb(158, 43, 43);
     r: 15;
-    
 }
 .control-point{
     fill:  rgb(69, 69, 152);
@@ -22,18 +30,27 @@
     stroke-width: 10;
     stroke: rgb(158, 43, 43);
 }
+.path-point, .control-point, .implied-point, .glyph{
+    cursor: move;
+}
 .character-outline{
-    fill: rgb(27, 92, 25);
+    fill: rgba(27, 92, 25, 0.442);
     stroke-width: 10px;
     stroke-linejoin: round;
     stroke: rgb(113, 184, 75);
 }
 
 .glyph{
-    fill: rgb(135, 85, 44);
+    fill: rgba(135, 85, 44, 0.442);
     stroke-width: 10px;
     stroke-linejoin: round;
     stroke: rgb(220, 120, 39);
+    transition: 0.1s ease-in-out;
+}
+
+.glyph:hover{
+    fill: rgb(135, 85, 44);
+    transition: 0.1s ease-in-out;
 }
 .emsquare{
     fill: transparent;
@@ -46,13 +63,52 @@
     width: 25vw;
     height: 100vh;
     overflow: scroll;
+    
+}
+
+.font-data .key-value .key, .font-data .dropdown{
+    color:rgb(66, 58, 70);
+}
+
+.font-data .subtree, .font-data .dropdown{
+    border-color: rgb(16, 15, 17);
 }
 
 .glyph-picker{
     width: 50vw;
     height: 100vh;
-    overflow: scroll;
+    overflow-y: scroll;
+    overflow-x: visible;
     position: absolute;
     right: 0;
     top: 0;
+    resize: vertical;
+    justify-content: right;
 }
+.glyph-picker svg{
+    transition: 0.1s ease-in-out;
+}
+.glyph-picker svg:hover{
+    transform: scale(110%);
+    transition: .1s ease-in-out;
+    
+}
+
+.glyph-picker svg path{
+    stroke-dasharray: 150;
+    stroke-dashoffset: -150;
+    transition: 0.4s ease-out;
+    stroke-width: 1;
+    stroke: rgb(211, 66, 95);
+    fill: rgb(66, 58, 70);
+
+}
+.glyph-picker svg:hover path{
+    stroke-width: 20;
+    stroke-dashoffset: 0;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+    transition: 0.4s ease-in-out;
+
+}
+

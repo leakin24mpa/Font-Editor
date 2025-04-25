@@ -1,23 +1,22 @@
-.subtree-container{
-    overflow: hidden;
-}
+
 .subtree{
     margin-left: 5px;
     padding-left: 10px;
     overflow: hidden;
     height: 0;
-    font-family: 'Roboto', sans-serif;
     border-left: 1px solid rgb(213, 213, 213);
 }
 .subtree.active{
     height: fit-content;
+    max-height: 1000px;
+    overflow: scroll;
 }
 .key-value{
     height: 50px;
     display: flex;
     align-items: center;
     
-    font-weight: lighter;
+    
     
     
 }
@@ -32,9 +31,12 @@
 .key-value .value{
     padding-left: 15px;
     padding-right: 15px;
-    background-color: rgba(145, 237, 129, 0.39);
-    color: rgb(46, 71, 40);
+    background-color: rgba(145, 237, 129, 0.106);
+    color: rgb(70, 115, 59);
     border-radius: 7px;
+}
+.key-value .key{
+    font-weight: lighter;
 }
 .dropdown{
     margin-left: 5px;
@@ -49,6 +51,8 @@
     border-bottom: 5px solid rgb(120, 202, 114);
     transition: 0.1s ease-in-out;
 }
+
+
 .dropdown::before{
     content: '';
     background-image: url("../img/arrow.svg");

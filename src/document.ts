@@ -11,10 +11,13 @@ import { multiElement } from "./lib/domtools.js";
 import { DIV, INPUT, P, SetDocumentContent } from "./lib/htmltools.js";
 import { SVG } from "./lib/svgtools.js";
 
-fetch("Comic Sans MS Bold.ttf").then((response) => response.arrayBuffer().then((response) => loadPage(response)));
+fetch("CascadiaMono-VariableFont_wght.ttf").then((response) => response.arrayBuffer().then((response) => loadPage(response)));
 
 let loadPage = (fontfilebuffer: ArrayBuffer) => {
     let font = new Font(fontfilebuffer);
+    let editor = DIV(
+        createGlyphEditor(font, 184)
+    );
     console.log(font);
     SetDocumentContent(
         // DIV(
@@ -26,19 +29,23 @@ let loadPage = (fontfilebuffer: ArrayBuffer) => {
         // new FEpinput(6, "Join"),
         // INPUT().withAttributes({type: "checkbox"}),
         //...multiElement(200, (i) => createGlyphEditor(font, i)),
-        createGlyphEditor(font, 184),
+        editor,
         DIV(
-            ...multiElement(font.maxp.numGlyphs, (i) => new FEglyphDisplay(font, i).withClass("glyph-display")),
+            ...multiElement(
+                font.maxp.numGlyphs, (i) => new FEglyphDisplay(font, i).withClass("glyph-display")
+                .onEvent("click", () => {
+                    editor.replaceContent(createGlyphEditor(font, i));
+                })
+            ),
         ).withClass("glyph-picker"),
         
         
         DIV(
-            new FEtreeView("Comic Sans MS Bold", {
+            new FEtreeView("Cascadia Mono", {
                 Directory: font.directory,
                 Head: font.head,
                 "Max Profile": font.maxp,
                 "Horizontal Header": font.hhea,
-                locations: font.loca,
                 glyph0: font.glyphs[0]
             })
         ).withClass("font-data")

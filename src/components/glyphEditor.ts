@@ -103,7 +103,7 @@ export function createSVGforGlyph(font: Font, glyphIndex: number): SVGElement{
         )
     }
     else{
-        return PATH(GlyphToSvgPathData((glyph as SimpleGlyph).points));
+        return PATH(GlyphToSvgPathData((glyph as SimpleGlyph).points)).withAttributes({pathLength: 100});
     }
 }
 class DraggableGlyph extends SVGPath implements Draggable{
@@ -177,7 +177,7 @@ export class FEglyphEditor extends FEdragRegion(FESVG){
         };
         this.filterCoordinates(0, 0);
         this.addDraggableChildren(...points)
-        this.withClass("point-plot").withAttributes({width: 400, height: 400, viewBox: `-0.5 -0.5 2 2`});
+        this.withClass("point-plot").withAttributes({width: 600, height: 600, viewBox: `-0.1 -0.1 1.2 1.2`});
         this.whileDragging = () => {
             bezierPath.setData(GlyphToSvgPathData(points));
         }
@@ -206,7 +206,7 @@ export class FEcompoundGlyphEditor extends FEdragRegion(FESVG){
         this.filterCoordinates = (x,y) => {
             return transform.inverse().applyTo({x: x / 400,y: y / 400});
         };
-        this.withClass("point-plot").withAttributes({width: 400, height: 400, viewBox: "-0.5 -0.5 2 2"});
+        this.withClass("point-plot").withAttributes({width: 600, height: 600, viewBox: "-0.1 -0.1 1.2 1.2"});
         this.addDraggableChildren(...paths);
 
     }
@@ -214,8 +214,9 @@ export class FEcompoundGlyphEditor extends FEdragRegion(FESVG){
 
 export class FEglyphDisplay extends FESVG{
     constructor(font: Font, index: number){
-        let scale = font.head.unitsPerEm;
-        let transform = Transform2d.scaleXY(1/scale, -1/scale).then(Transform2d.translation(0,1));
+        let glyph = font.glyphs[index];
+        let scale = font.hhea.ascent - font.hhea.descent;
+        let transform = Transform2d.translation(0, -font.hhea.descent).then(Transform2d.scaleXY(1/scale, -1/scale)).then(Transform2d.translation(0,1));
         super(
             GROUP(
                 createSVGforGlyph(font, index)
