@@ -20,13 +20,16 @@ export function FEdragRegion<T extends new (...args: any) => FElement>(base: T) 
         onDragEnd: Function;
         whileDragging: Function;
         private getCoords(e){
+            let box = this.element.getBoundingClientRect()
             if(this.filterCoordinates){
-                return this.filterCoordinates(e.offsetX,e.offsetY);
+                return this.filterCoordinates(e.clientX - box.left,e.clientY - box.top);
             }
             return {x: e.offsetX, y: e.offsetY};
         }
         private completeDrag(mousePosition){
-            (this.controller.selectedElement as any).removeClass("selected");
+            if(this.controller.selectedElement){
+                (this.controller.selectedElement as any).removeClass("selected");
+            }
             this.controller.endDrag(mousePosition.x, mousePosition.y);
             this.onDragEnd();
         }
@@ -39,9 +42,8 @@ export function FEdragRegion<T extends new (...args: any) => FElement>(base: T) 
             this.controller = new DragController();
             this.onDragEnd = () => {};
             this.whileDragging = () => {};
-            this.onEvent("mouseup", (e) => this.completeDrag(this.getCoords(e)));
-            this.onEvent("mouseleave", (e) => this.completeDrag(this.getCoords(e)));
-            this.onEvent("mousemove", (e) => this.updateDrag(this.getCoords(e)));
+            window.addEventListener("mouseup", (e) => this.completeDrag(this.getCoords(e)))
+            window.addEventListener("mousemove", (e) => this.updateDrag(this.getCoords(e)));
             
         
         }

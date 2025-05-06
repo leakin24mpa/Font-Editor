@@ -12,7 +12,7 @@
     overflow: scroll;
 }
 .key-value{
-    height: 50px;
+    min-height: 50px;
     display: flex;
     align-items: center;
     

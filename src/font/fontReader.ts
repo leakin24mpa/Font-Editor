@@ -26,6 +26,16 @@ class BinaryReader{
         this.byteIdx += 4;
         return this.dataview.getUint32(this.byteIdx - 4, false);
     }
+    readInt32(){
+        this.byteIdx += 4;
+        return this.dataview.getInt32(this.byteIdx - 4, false);
+    }
+    readUint8(){
+        return this.dataview.getUint8(this.byteIdx++);
+    }
+    readInt8(){
+        return this.dataview.getInt8(this.byteIdx++);
+    }
     readInt2_14(){
         return this.readInt16() / 16384.0;
     }
@@ -35,6 +45,9 @@ class BinaryReader{
             str += String.fromCharCode(this.readByte());
         }
         return str;
+    }
+    readShortFrac(){
+        return this.readInt16() / 0x4000;
     }
     readFixed16_16(){
         let val = this.readUint32();
@@ -47,6 +60,12 @@ class BinaryReader{
         this.byteIdx += 8;
         return f;
 
+    }
+    readLongDateTime(){
+        let baseDate = new Date(Date.UTC(1904, 0, 1)); 
+        let s = this.readInt32();
+        let s2 = this.readUint32();
+        return new Date(baseDate.getTime() + 1000 * s2)
     }
     goTo(byte: number){
         this.byteIdx = byte;
@@ -257,6 +276,28 @@ export class FontReader extends BinaryReader{
 
 }
 
+export const nameIDs = [
+   "Copyright",
+   "Family",
+   "Subfamily",
+   "Unique ID",
+   "Full Name",
+   "Name Table Version",
+   "PostScript Name",
+   "Trademark",
+   "Manufacturer",
+   "Designer",
+   "Description",
+   "Vendor URL",
+   "Designer URL",
+   "License desc",
+   "License info URL",
+   "Reserved",
+   "Preferred Family",
+   "Preferred Subfamily",
+   "Compatible Full",
+   "Sample Text"
+]
 
 
 

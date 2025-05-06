@@ -1,5 +1,5 @@
 import { P } from "../lib/htmltools.js";
-import {CharacterIndexMap, FontDirectory, FontReader, Glyph } from "./fontReader.js";
+import {CharacterIndexMap, FontDirectory, FontReader, Glyph, nameIDs } from "./fontReader.js";
 
 export class Font{
     directory: FontDirectory;
@@ -7,7 +7,9 @@ export class Font{
     maxp: any;
     hhea: any;
     loca: number[];
-    cmap: CharacterIndexMap;
+    name: any;
+    cmapInfo: any;
+    cmap: any;
     glyphs: Glyph[];
     constructor(arraybuffer: ArrayBuffer){
         let reader = new FontReader(arraybuffer);
@@ -38,8 +40,8 @@ export class Font{
             magicNumber: reader.readUint32(),
             flags: reader.readUint16(),
             unitsPerEm: reader.readUint16(),
-            created: reader.readFloat64(), //incorrect, should be int64
-            modified: reader.readFloat64(), //incorrect, should be int64
+            created: reader.readLongDateTime(), 
+            modified: reader.readLongDateTime(), 
             bounds: {
                 min:{
                     x: reader.readInt16(),
@@ -133,6 +135,7 @@ export class Font{
             throw new Error("The font does not have a unicode cmap table");
         }
         let validFormat = false;
+        let subtableIndex;
         let cmapInfo;
         for(let i = 0; i < subtables.length; i++){
             reader.goTo(subtables[i].location);
@@ -142,13 +145,97 @@ export class Font{
                 language: reader.readUint16()
             }
             
-            if(cmapInfo.format == 4 || cmapInfo.format == 0){
+            if(cmapInfo.format == 4){
                 validFormat = true;
+                subtableIndex = i;
                 break;
             }
         }
         if(!validFormat){
             throw new Error("The font uses an unsupported cmap encoding format ");
+        }
+
+        let cmap = [];
+        if(cmapInfo.format == 4){
+            reader.goTo(subtables[subtableIndex].location);
+            reader.skipForward(6);
+            
+            cmapInfo.segCount = reader.readUint16() / 2;
+            cmapInfo.searchRange = reader.readUint16();
+            cmapInfo.entrySelector = reader.readUint16();
+            cmapInfo.rangeShift = reader.readUint16();
+            cmapInfo.endCode = reader.readUint16();
+            
+            cmapInfo.segments = [];
+            for(let i = 0; i < cmapInfo.segCount; i++){
+                cmapInfo.segments.push({
+                    endCode: reader.readUint16() });
+            }
+            cmapInfo.reservedPad = reader.readUint16();
+            for(let i = 0; i < cmapInfo.segCount; i++){
+                cmapInfo.segments[i].startCode = reader.readUint16();
+            }
+            for(let i = 0; i < cmapInfo.segCount; i++){
+                cmapInfo.segments[i].idDelta = reader.readUint16();
+            }
+            cmapInfo.rangeTableIndex = reader.byteIdx;
+            for(let i = 0; i < cmapInfo.segCount; i++){
+                
+                cmapInfo.segments[i].idRangeOffset = reader.readUint16();
+
+            }
+
+            for(let i = 0; i < cmapInfo.segCount; i++){
+                let seg = cmapInfo.segments[i];
+                for(let ci = seg.startCode; ci <= seg.endCode; ci++){
+                    if(seg.idRangeOffset == 0){
+                        cmap[(ci + seg.idDelta) % 65536] = ci;
+                    }
+                    else{
+                        let charindexindex = seg.idRangeOffset + 2 * (ci - seg.startCode)+ cmapInfo.rangeTableIndex + i * 2;
+                        
+                        reader.goTo(charindexindex);
+                        let idx = reader.readUint16();
+                        if(idx != 0){
+                            idx = (idx + seg.idDelta) % 65536
+                        }
+                        cmap[idx] = ci;
+                    }
+                    
+                    
+                }
+                
+            }
+        }
+
+        reader.goToTable(directory.name);
+        let name = {
+            format: reader.readUint16(),
+            count: reader.readUint16(),
+            stringOffset: reader.readUint16(),
+            records: []
+        }
+        for(let i = 0; i < name.count; i++){
+            name.records.push({
+                platformID: reader.readUint16(),
+                platformSpecificID: reader.readUint16(),
+                languageID: reader.readUint16(),
+                nameID: reader.readUint16(),
+                length: reader.readUint16(),
+                offset: reader.readUint16(),
+
+            })
+        }
+        let stringpostion = directory.name.location + name.stringOffset;
+        let fontInfo = {};
+        for(var i in name.records){
+            reader.goTo(stringpostion);
+            reader.skipForward(name.records[i].offset);
+            if(name.records[i].platformSpecificID == 1 && name.records[i].languageID == 1033){
+                let text = reader.readString(name.records[i].length);
+                fontInfo[nameIDs[name.records[i].nameID]] = text;
+            }
+            
         }
         
         
@@ -158,8 +245,9 @@ export class Font{
         this.maxp = maxp;
         this.hhea = hhea;
         this.loca = loca;
-
-        this.cmap = {};
+        this.name = fontInfo;
+        this.cmapInfo = cmapInfo;
+        this.cmap = cmap;
         this.glyphs = [];
         for(let i = 0; i < maxp.numGlyphs; i++){
             reader.goTo(loca[i]);

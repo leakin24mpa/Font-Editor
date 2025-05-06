@@ -5,25 +5,30 @@
 body{
     background-color: rgb(8, 8, 12);
     font-family: "Cascadia Mono";
+    color:rgb(66, 58, 70);
+    margin:0;
 }
-
+::selection{
+    background: rgba(48, 147, 104, 0.221);
+    color: rgb(100, 239, 172);
+}
 .point-plot, .point-group{
     background: radial-gradient(
-        rgb(62, 59, 59), 
-        rgb(62, 59, 59) 1px, 
-        rgb(38, 34, 34) 1px
+        rgb(39, 37, 37), 
+        rgb(39, 37, 37) 5%, 
+        rgb(0, 0, 0) 5%
 
     );
-    background-size: 20px 20px;
-    
+    background-size: 4% 4%;
+    max-width: 100%;
+    max-height: 100%;
+
 }
 .path-point{
     fill:rgb(158, 43, 43);
-    r: 15;
 }
 .control-point{
     fill:  rgb(69, 69, 152);
-    r: 15;
 }
 .implied-point{
     fill: transparent;
@@ -41,15 +46,16 @@ body{
 }
 
 .glyph{
-    fill: rgba(135, 85, 44, 0.442);
+    fill: rgba(232, 118, 25, 0.442);
     stroke-width: 10px;
     stroke-linejoin: round;
-    stroke: rgb(220, 120, 39);
+    stroke: rgba(220, 120, 39, 0);
     transition: 0.1s ease-in-out;
 }
 
 .glyph:hover{
-    fill: rgb(135, 85, 44);
+    fill: rgba(212, 120, 46, 0.442);
+    stroke: rgba(220, 120, 39, 0.96);
     transition: 0.1s ease-in-out;
 }
 .emsquare{
@@ -75,15 +81,12 @@ body{
 }
 
 .glyph-picker{
-    width: 50vw;
+    
+
+    width: 45vw;
     height: 100vh;
     overflow-y: scroll;
     overflow-x: visible;
-    position: absolute;
-    right: 0;
-    top: 0;
-    resize: vertical;
-    justify-content: right;
 }
 .glyph-picker svg{
     transition: 0.1s ease-in-out;
@@ -91,7 +94,10 @@ body{
 .glyph-picker svg:hover{
     transform: scale(110%);
     transition: .1s ease-in-out;
+    background-color: rgb(23, 23, 35);
     
+    z-index: 0;
+
 }
 
 .glyph-picker svg path{
@@ -99,7 +105,7 @@ body{
     stroke-dashoffset: -150;
     transition: 0.4s ease-out;
     stroke-width: 1;
-    stroke: rgb(211, 66, 95);
+    stroke: rgb(100, 239, 172);
     fill: rgb(66, 58, 70);
 
 }
@@ -111,4 +117,25 @@ body{
     transition: 0.4s ease-in-out;
 
 }
+.glyph-info{
+    color:rgb(66, 58, 70);
+    position: absolute;
+    top: 0;
+    left:0;
+}
 
+.vertical-divider{
+    height: 100vh;
+    width: 100vw;
+    display: flex;
+    flex-direction: row;
+}
+.vertical-divider div{
+    overflow-x: hidden;
+
+}
+.vertical-divider .divider{
+    width: 10px;
+    height: 100%;
+    background-color: beige;
+}

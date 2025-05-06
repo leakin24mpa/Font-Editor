@@ -68,6 +68,9 @@ export class Transform2d{
     toSvgString(){
         return `matrix(${this.a} ${this.b} ${this.c} ${this.d} ${this.e} ${this.f})`
     }
+    copy(){
+        return new Transform2d(this.a, this.b, this.c, this.d, this.e, this.f);
+    }
     static translation(x: number, y: number): Transform2d{
         return new Transform2d(1,0,0,1,x,y);
     }

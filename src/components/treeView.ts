@@ -13,7 +13,10 @@ class FEkeyValue extends FEdiv{
     }
 }
 function createTreeView(key: string, object: any){
-    if(typeof object == "object" && object){
+    if(object instanceof Date){
+        return new FEkeyValue(key, object.toUTCString());
+    }
+    else if(typeof object == "object" && object){
         return new FEtreeView(key, object);
     }
     else{
