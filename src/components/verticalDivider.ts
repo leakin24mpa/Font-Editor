@@ -1,8 +1,11 @@
 import { DIV, FEdiv, FElement } from "../lib/htmltools.js";
 
+function styleWidthString(dividerWidth: string, percent: number, noPointerEvents: boolean){
+  return `height: 100%; width: calc(${percent}% - 0.5 * ${dividerWidth}); ${noPointerEvents? "pointer-events: none;": ""}`
+}
 export class FEverticalDivider extends FEdiv{
   
-  constructor(left: FElement, right: FElement){
+  constructor(dividerWidth: string, left: FElement, right: FElement){
     let mouseX;
     let percent = 50;
     let initialPercent = 50;
@@ -21,15 +24,15 @@ export class FEverticalDivider extends FEdiv{
       if(isDragging){
         percent = initialPercent + (e.clientX - mouseX) / this.element.clientWidth * 100;
         percent = Math.min(Math.max(percent, 0), 100);
-        left.withAttributes({style: `height: 100%; width: calc(${percent}% - 5px); pointer-events: none;`});
-        right.withAttributes({style: `height: 100%; width: calc(${100 - percent}% - 5px); pointer-events: none;`});
+        left.withAttributes({style: styleWidthString(dividerWidth, percent, true)});
+        right.withAttributes({style: styleWidthString(dividerWidth, 100 - percent, true)});
       }   
     });
     window.addEventListener("mouseup", (e) => {
       if(isDragging){
         isDragging = false;
-        left.withAttributes({style: `height: 100%; width: calc(${percent}% - 5px);`});
-        right.withAttributes({style: `height: 100%; width: calc(${100 - percent}% - 5px);`});
+        left.withAttributes({style: styleWidthString(dividerWidth, percent, false)});
+        right.withAttributes({style: styleWidthString(dividerWidth, 100 - percent, false)});
       }
       
     });
@@ -37,10 +40,10 @@ export class FEverticalDivider extends FEdiv{
     
     
     super(
-      left.withAttributes({style: "height: 100%; width: calc(50% - 5px);"}),
-      divider,
-      right.withAttributes({style: "height: 100%; width: calc(50% - 5px);"}),
-    )
+      left.withAttributes({style: styleWidthString(dividerWidth, percent, false)}),
+      divider.withAttributes({style: `width: ${dividerWidth}; height: 100%`}),
+      right.withAttributes({style: styleWidthString(dividerWidth, percent, false)}),
+    );
     this.withClass("vertical-divider");
   }
 }

@@ -2,6 +2,7 @@ import { Font } from "../font/font.js";
 import { CompoundGlyph, Glyph, GlyphPoint, SimpleGlyph } from "../font/fontReader.js";
 import { FEdragRegion } from "../lib/domtools.js";
 import { Draggable } from "../lib/draggable.js";
+import { DIV } from "../lib/htmltools.js";
 import { FESVG, GROUP, PATH, SVGCircle, SVGElement, SVGGroup, SVGPath } from "../lib/svgtools.js";
 import { Transform2d } from "../lib/transformtools.js";
 
@@ -173,7 +174,7 @@ export class FEsimpleGlyphEditor extends FEdragRegion(FESVG){
             
         )
         this.filterCoordinates = (x,y) => {
-            return transform.inverse().applyTo({x: x / this.element.clientWidth,y: y / this.element.clientHeight});
+            return transform.inverse().applyTo({x: x / (this.element.clientWidth / 1.2),y: y / (this.element.clientHeight / 1.2)});
         };
         this.filterCoordinates(0, 0);
         this.addDraggableChildren(...points)
@@ -202,9 +203,9 @@ export class FEcompoundGlyphEditor extends FEdragRegion(FESVG){
         )
 
         this.filterCoordinates = (x,y) => {
-            return transform.inverse().applyTo({x: x / 400,y: y / 400});
+            return transform.inverse().applyTo({x: x / (this.element.clientWidth / 1.2),y: y / (this.element.clientHeight / 1.2)});
         };
-        this.withClass("point-plot").withAttributes({width: 600, height: 600, viewBox: "-0.1 -0.1 1.2 1.2"});
+        this.withClass("point-plot").withAttributes({viewBox: "-0.1 -0.1 1.2 1.2"});
         this.addDraggableChildren(...paths);
 
     }

@@ -23,14 +23,17 @@ let loadPage = (fontfilebuffer: ArrayBuffer) => {
     console.log(reader.readTable(offsetSubtable));
 
     let editor = new FEglyphEditor(font, 184);
+
     SetDocumentContent(
         new FEverticalDivider(
+            "10px",
             editor,
             DIV(
                 ...multiElement(
                     font.maxp.numGlyphs, (i) => new FEglyphDisplay(font, i).withClass("glyph-display")
                     .onEvent("click", () => {
                         editor.loadGlyph(font, i);
+
                     })
                 ),
             ).withClass("glyph-picker"),
@@ -38,17 +41,17 @@ let loadPage = (fontfilebuffer: ArrayBuffer) => {
         
         
         
-        DIV(
-            new FEtreeView(font.name["Full Name"], {
-                "Directory": font.directory,
-                "Head": font.head,
-                "Max Profile": font.maxp,
-                "Horizontal Header": font.hhea,
-                "Cmap Info": font.cmapInfo,
-                "Character Map": font.cmap,
-                "name": font.name
-            })
-        ).withClass("font-data")
+        // DIV(
+        //     new FEtreeView(font.name["Full Name"], {
+        //         "Directory": font.directory,
+        //         "Head": font.head,
+        //         "Max Profile": font.maxp,
+        //         "Horizontal Header": font.hhea,
+        //         "Cmap Info": font.cmapInfo,
+        //         "Character Map": font.cmap,
+        //         "name": font.name
+        //     })
+        // ).withClass("font-data")
 
     )
 }
