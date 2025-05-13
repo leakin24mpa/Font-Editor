@@ -77,7 +77,7 @@ export class Transform2d{
     static rotation(angle){
         let cos = Math.cos(angle);
         let sin = Math.sin(angle);
-        return new Transform2d(cos, -sin, cos, sin, 0, 0);
+        return new Transform2d(cos, sin, -sin, cos, 0, 0);
     }
     static scale(scale){
         return new Transform2d(scale, 0,0, scale, 0, 0);

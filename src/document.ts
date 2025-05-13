@@ -1,8 +1,8 @@
 import { FEcarousel } from "./components/carousel.js";
 import { FEcounterlist } from "./components/counterList.js";
-import { FEpointPlot } from "./components/draggablePointPlot.js";
-import { createGlyphEditor, createSVGforGlyph, FEglyphDisplay, FEsimpleGlyphEditor } from "./components/glyphCanvas.js";
+import { createGlyphEditor, createSVGforGlyph, FEglyphDisplay } from "./components/glyphCanvas.js";
 import { FEglyphEditor } from "./components/glyphEditor.js";
+import { FEhorizontallDivider } from "./components/horizontalDivider.js";
 import { FEpinput } from "./components/Pinput.js";
 import { FEgameInfoList } from "./components/publicGameList.js";
 import { FEtreeView } from "./components/treeView.js";
@@ -26,8 +26,13 @@ let loadPage = (fontfilebuffer: ArrayBuffer) => {
 
     SetDocumentContent(
         new FEverticalDivider(
-            "10px",
-            editor,
+            10,
+            new FEhorizontallDivider(
+                10,
+                editor,
+                DIV().says("hello world")
+            ),
+            
             DIV(
                 ...multiElement(
                     font.maxp.numGlyphs, (i) => new FEglyphDisplay(font, i).withClass("glyph-display")
@@ -37,21 +42,22 @@ let loadPage = (fontfilebuffer: ArrayBuffer) => {
                     })
                 ),
             ).withClass("glyph-picker"),
+            DIV(
+                new FEtreeView(font.name["Full Name"], {
+                    "Directory": font.directory,
+                    "Head": font.head,
+                    "Max Profile": font.maxp,
+                    "Horizontal Header": font.hhea,
+                    "Cmap Info": font.cmapInfo,
+                    "Character Map": font.cmap,
+                    "name": font.name
+                })
+            ).withClass("font-data")
         ),
         
         
         
-        // DIV(
-        //     new FEtreeView(font.name["Full Name"], {
-        //         "Directory": font.directory,
-        //         "Head": font.head,
-        //         "Max Profile": font.maxp,
-        //         "Horizontal Header": font.hhea,
-        //         "Cmap Info": font.cmapInfo,
-        //         "Character Map": font.cmap,
-        //         "name": font.name
-        //     })
-        // ).withClass("font-data")
+        
 
     )
 }

@@ -18,23 +18,36 @@ body{
         rgb(39, 37, 37) 5%, 
         rgb(0, 0, 0) 5%
 
-    );
+    ); 
+
     background-size: 4% 4%;
     max-width: 100%;
     max-height: 100%;
-
+    cursor: url(../img/crosshair.svg) 8 8, pointer;
 }
 .path-point{
-    fill:rgb(158, 43, 43);
+    fill:rgb(208, 56, 78);
+    fill-opacity: 75%;
+}
+.path-point.selected, .control-point.selected{
+    r: 17;
+    fill-opacity: 100%;
 }
 .control-point{
     fill:  rgb(69, 69, 152);
+    fill-opacity: 75%;
 }
 .implied-point{
     fill: transparent;
     stroke-width: 10;
-    stroke: rgb(158, 43, 43);
+    stroke: rgb(208, 56, 78);
+    stroke-opacity: 75%;
 }
+.implied-point.selected{
+    stroke-opacity: 100%;
+}
+
+
 .path-point, .control-point, .implied-point, .glyph{
     cursor: move;
 }
@@ -42,26 +55,34 @@ body{
     fill: rgba(27, 92, 25, 0.442);
     stroke-width: 10px;
     stroke-linejoin: round;
-    stroke: rgb(113, 184, 75);
+    stroke: rgb(56, 103, 31);
 }
 
 .glyph{
     fill: rgba(232, 118, 25, 0.442);
-    stroke-width: 10px;
+    stroke: rgba(220, 120, 39, 0.96);
     stroke-linejoin: round;
-    stroke: rgba(220, 120, 39, 0);
-    transition: 0.1s ease-in-out;
+    stroke-width: 0px;
+    /* stroke: rgba(220, 120, 39, 0); */
+    /* transition: stroke-width 0.2s ease-in-out; */
+
 }
 
-.glyph:hover{
-    fill: rgba(212, 120, 46, 0.442);
-    stroke: rgba(220, 120, 39, 0.96);
-    transition: 0.1s ease-in-out;
+.glyph:hover, .glyph.selected{
+    
+    stroke-width: 5px;
+    transition: stroke-width 0.2s ease-in-out;
+}
+
+.glyph.selected{
+    stroke-width: 8px;
+    stroke: rgba(220, 96, 39, 0.96);
+    transition: stroke 0.2s ease-in-out;
 }
 .emsquare{
     fill: transparent;
     stroke-width: 0.005px;
-    stroke-dasharray: 0.02px 0.01px;
+    stroke-dasharray: 0.03px 0.03px;
     stroke: rgb(159, 122, 122);
 }
 
@@ -139,3 +160,33 @@ body{
     background-color: rgb(21, 21, 22);
     cursor:col-resize;
 }
+
+.box-select{
+    fill: transparent;
+    stroke:rgb(99, 111, 99);
+    stroke-width: 5px;
+    stroke-dasharray: 20 20;
+}
+
+.resizer-rect{
+    fill:transparent;
+    stroke: rgb(123, 83, 120);
+    stroke-width: 10;
+}
+.resizer-point{
+    fill: rgb(169, 87, 162);
+}
+.resizer-point.px, .resizer-point.mx{
+    cursor: ew-resize;
+}
+.resizer-point.py, .resizer-point.my{
+    cursor: ns-resize;
+}
+
+.resizer-point.px.my, .resizer-point.mx.py{
+    cursor: nwse-resize;
+}
+.resizer-point.py.px, .resizer-point.my.mx{
+    cursor: nesw-resize;
+}
+

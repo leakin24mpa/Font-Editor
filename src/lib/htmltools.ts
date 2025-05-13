@@ -1,3 +1,5 @@
+import { FEvent } from "./eventtools.js";
+
 export class FElement{
     element;
     constructor(type: string | any, ...children: FElement[]){
@@ -53,6 +55,9 @@ export class FElement{
             this.element.appendChild(children[i].element);
         }
         return this;
+    }
+    selfDestruct(){
+        this.element.remove();
     }
 }
 
