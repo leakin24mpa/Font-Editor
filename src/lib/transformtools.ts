@@ -89,3 +89,21 @@ export class Transform2d{
         return new Transform2d(1,0,0,1,0,0);
     }
 }
+
+export function transformBounds(bounds: any, tf: Transform2d){
+    let p1 = tf.applyTo(bounds.min);
+    let p2 = tf.applyTo({x: bounds.min.x, y: bounds.max.y});
+    let p3 = tf.applyTo(bounds.max);
+    let p4 = tf.applyTo({x: bounds.max.x, y: bounds.min.y});
+
+    return {
+        min: {
+            x: Math.min(p1.x, p2.x, p3.x, p4.x),
+            y: Math.min(p1.y, p2.y, p3.y, p4.y),
+        },
+        max: {
+            x: Math.max(p1.x, p2.x, p3.x, p4.x),
+            y: Math.max(p1.y, p2.y, p3.y, p4.y),
+        }
+    }
+}

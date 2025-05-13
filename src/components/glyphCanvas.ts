@@ -1,153 +1,11 @@
 import { Font } from "../font/font.js";
-import { CompoundGlyph, Glyph, GlyphPoint, SimpleGlyph } from "../font/fontReader.js";
+import { CompoundGlyph, SimpleGlyph } from "../font/fontReader.js";
 import { FEdragRegion, SVGboxResizer, SVGboxSelect } from "../lib/domtools.js";
-import { DragAction, Draggable } from "../lib/draggable.js";
-import { DIV, FEdiv } from "../lib/htmltools.js";
-import { FESVG, GROUP, PATH, FESVGCircle, SVGFElement, FESVGGroup, FESVGPath, RECT } from "../lib/svgtools.js";
-import { Transform2d } from "../lib/transformtools.js";
+import { FESVG, GROUP, PATH, SVGFElement, FESVGGroup, RECT } from "../lib/svgtools.js";
+import { Transform2d, transformBounds } from "../lib/transformtools.js";
+import { DraggableGlyphPoint, GlyphToSvgPathData, DraggableGlyph, createSVGforGlyph, SVGGlyphContour } from "./glyphGUIComponents.js";
 
-type DraggableGlyphPoint = Draggable & GlyphPoint
 
-class DraggablePoint extends FESVGCircle implements DraggableGlyphPoint{
-    x: number;
-    y: number;
-    px: number;
-    py: number;
-    selected: boolean;
-    isOnCurve: boolean;
-    isImplied: boolean;
-    isEndpoint: boolean;
-    constructor(x,y,isOnCurve, isImplied, isEndpoint){
-        super(x,y,15);
-        this.selected = false;
-        this.isImplied = isImplied;
-        this.isOnCurve = isOnCurve;
-        this.isEndpoint = isEndpoint;
-        if(isOnCurve){
-            this.withClass("path-point");
-        }
-        else{
-            this.withClass("control-point");
-        }
-        if(isImplied){
-            this.withClass("implied-point");
-        }
-        this.x = x;
-        this.y = y;
-        this.px = x;
-        this.py = y;
-    }
-    duringDrag(mouseDeltaX: number, mouseDeltaY: number): void {
-        this.px = mouseDeltaX + this.x;
-        this.py = mouseDeltaY + this.y;
-        this.setPosition(this.px, this.py);
-    }
-    completeDrag(mouseDeltaX: number, mouseDeltaY: number): void {
-        this.x += mouseDeltaX;
-        this.y += mouseDeltaY;
-        this.px = this.x;
-        this.py = this.y;
-        this.setPosition(this.x, this.y);
-    }
-}
-function GlyphToSvgPathData(points: GlyphPoint[]): string{
-    let isStartPoint = true;
-    let contourStartCoordinates = {x: 0, y: 0};
-    let data = ''
-    let i = 0;
-    while(i < points.length){
-        let b: GlyphPoint;
-        if(i > 0){
-            b = points[i - 1];
-        }
-        let p = points[i];
-        let pl = {x: p.px, y: p.py};
-        if(isStartPoint){
-            contourStartCoordinates = {x: pl.x, y: pl.y};
-            data += ` M ${pl.x} ${pl.y}`
-            isStartPoint = false;
-        }
-        else if(b.isOnCurve && p.isOnCurve){
-            data += ` L ${pl.x} ${pl.y}`
-        }
-        else if(!b.isOnCurve && p.isOnCurve){
-            data += ` ${pl.x} ${pl.y}`
-        }
-        else if(!p.isOnCurve){
-            data += ` Q ${pl.x} ${pl.y}`
-        }
-
-        if(p.isEndpoint){
-            if(b.isOnCurve && !p.isOnCurve){
-                data += ` ${contourStartCoordinates.x} ${contourStartCoordinates.y}`
-            }
-            data += ` Z`;
-
-            isStartPoint = true;
-        }
-
-        i++;
-    }
-    return data;
-}
-export function createSVGforGlyph(font: Font, glyphIndex: number): SVGFElement{
-    let glyph = font.glyphs[glyphIndex];
-    if(glyph.isCompound){
-        let children = [];
-        for(let i = 0; i < glyph.components.length; i++){
-            children.push(
-                createSVGforGlyph(font, glyph.components[i].index)
-                .withAttributes({transform: glyph.components[i].transform.toSvgString()})
-            );
-        }
-        return GROUP(
-            ...children
-        )
-    }
-    else{
-        return PATH(GlyphToSvgPathData((glyph as SimpleGlyph).points)).withAttributes({pathLength: 100});
-    }
-}
-class DraggableGlyph extends FESVGGroup implements Draggable{
-    x: number;
-    y: number;
-    px: number;
-    py: number;
-    selected: boolean;
-    transform: Transform2d;
-    private updateTransformData(){
-        this.transform.e = this.px;
-        this.transform.f = this.py;
-        this.withAttributes({transform: this.transform.toSvgString()});
-    }
-    constructor(font: Font, glyphindex: number, transform: Transform2d){
-        super(createSVGforGlyph(font, glyphindex));
-        this.withClass("glyph");
-
-        this.transform = transform.copy();
-        this.x = transform.e;
-        this.y = transform.f;
-        this.px = this.x;
-        this.py = this.y;
-        this.selected = false;
-        this.updateTransformData();
-        
-        
-    }
-    duringDrag(mouseDeltaX: number, mouseDeltaY: number): void {
-        this.px = mouseDeltaX + this.x;
-        this.py = mouseDeltaY + this.y;
-        this.updateTransformData();
-    }
-    completeDrag(mouseDeltaX: number, mouseDeltaY: number): void {
-        this.x += mouseDeltaX;
-        this.y += mouseDeltaY;
-        this.px = this.x;
-        this.py = this.y;
-        this.updateTransformData();
-    }
-    
-}
 export function createGlyphEditor(font: Font, index: number): FEglyphCanvas{
     let glyph = font.glyphs[index];
 
@@ -164,6 +22,7 @@ class FEglyphCanvas extends FEdragRegion(FESVG){
     cameraTransform: Transform2d;
     canvas: FESVGGroup;
     boxselect: SVGboxSelect;
+    resizer: SVGboxResizer;
     constructor(scale: number){
         let transform = Transform2d.scaleXY(1/scale, -1/scale).then(Transform2d.translation(0,1)); 
         let canvas = GROUP(
@@ -188,29 +47,56 @@ class FEglyphCanvas extends FEdragRegion(FESVG){
         this.boxselect = new SVGboxSelect(this, canvas);
         
         this.emptyAction = this.boxselect;
+        this.resizer = new SVGboxResizer(50, 50, 200, 200, 15);
     }
     loadSimpleGlyph(glyph: SimpleGlyph){
         let bezierPath = PATH("");
         let points = [];
+        let contours = [];
+        let currentContour = [];
         for(let i = 0; i < glyph.points.length; i++){
             let p = glyph.points[i];
-            points.push(new DraggablePoint(p.px, p.py, p.isOnCurve, p.isImplied, p.isEndpoint));
+            points.push(new DraggableGlyphPoint(p.px, p.py, p.isOnCurve, p.isImplied, p.isEndpoint));
+            currentContour.push(i);
+            if(p.isEndpoint){
+                contours.push(currentContour);
+                currentContour = [];
+            }
         }
-        let resizer = new SVGboxResizer(50, 50, 200, 200, 15);
+        contours = contours.map((c) => new SVGGlyphContour(points, c).withClass("glyph-contour"));
+        contours.map((c) => {
+            c.onEvent("mousedown", (e: MouseEvent) => {
+                if(!e.shiftKey){
+                    this.controller.deselectAll();
+                }
+                this.controller.multiselect(...c.indicies.map((i) => points[i]));
+                
+                this.startDrag(e);
+                this.mouseOnEmpty = false;
+            });
+        })
         this.canvas.replaceContent(
             bezierPath.withClass("character-outline"),
+            GROUP(...contours),
             GROUP(...points),
         )
         this.addDraggableChildren(...points);
         this.controller.whileDragging.addResponse(() => {
             bezierPath.setData(GlyphToSvgPathData(points));
+            contours.map((c) => c.update(points));
+            if(this.controller.selectedElements.length == 1){
+                let point = this.controller.selectedElements[0] as DraggableGlyphPoint;
+                if(!point.isOnCurve){
+
+                }
+            }
         });
         this.controller.whileDragging.fire();
         this.boxselect.onSelect.addResponse(() => {     
             this.controller.multiselect(...points.filter((p) => this.boxselect.contains(p.x, p.y)));
         });
         this.controller.onSelectionChange.addResponse(() => {
-            resizer.selfDestruct();
+            this.resizer.selfDestruct();
             if(this.controller.selectedElements.length < 2){
                 return;
             }
@@ -223,12 +109,12 @@ class FEglyphCanvas extends FEdragRegion(FESVG){
                     bounds.maxy = Math.max(points[i].y, bounds.maxy);
                 }
             }
-            this.canvas.addChildren(resizer);
-            resizer.x = bounds.minx;
-            resizer.y = bounds.miny;
-            resizer.width = bounds.maxx - bounds.minx;
-            resizer.height = bounds.maxy - bounds.miny;
-            resizer.update();
+            this.canvas.addChildren(this.resizer);
+            this.resizer.x = bounds.minx;
+            this.resizer.y = bounds.miny;
+            this.resizer.width = bounds.maxx - bounds.minx;
+            this.resizer.height = bounds.maxy - bounds.miny;
+            this.resizer.update();
         })
     }
     loadCompoundGlyph(font: Font, glyph: CompoundGlyph){
@@ -243,6 +129,32 @@ class FEglyphCanvas extends FEdragRegion(FESVG){
         }
         this.canvas.replaceContent(...paths);
         this.addDraggableChildren(...paths);
+        this.boxselect.onSelect.addResponse(() => {     
+            this.controller.multiselect(...paths.filter((p) => this.element.checkIntersection(p.element, this.boxselect.collisionRect)));
+        });
+        this.controller.onSelectionChange.addResponse(() => {
+            this.resizer.selfDestruct();
+            if(this.controller.selectedElements.length < 1){
+                return;
+            }
+            let bounds = {minx: Infinity, miny: Infinity, maxx: -Infinity, maxy: -Infinity}
+            for(let i = paths.length - 1; i >= 0; i--){
+                if(paths[i].selected){
+                    let bbox = transformBounds(font.glyphs[paths[i].index].bounds, paths[i].transform);
+                    console.log(bbox);
+                    bounds.minx = Math.min(bbox.min.x, bounds.minx);
+                    bounds.maxx = Math.max(bbox.max.x, bounds.maxx);
+                    bounds.miny = Math.min(bbox.min.y, bounds.miny);
+                    bounds.maxy = Math.max(bbox.max.y, bounds.maxy);
+                }
+            }
+            this.canvas.addChildren(this.resizer);
+            this.resizer.x = bounds.minx;
+            this.resizer.y = bounds.miny;
+            this.resizer.width = bounds.maxx - bounds.minx;
+            this.resizer.height = bounds.maxy - bounds.miny;
+            this.resizer.update();
+        })
     }
 
 }

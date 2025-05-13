@@ -40,6 +40,10 @@ export function FEdragRegion<T extends new (...args: any) => FElement>(base: T) 
             this.controller.escapeDrag();
             this.emptyAction.escapeDrag();
         }
+        startDrag(e: MouseEvent){
+            let fc = this.getCoords(e);
+            this.controller.beginDrag(fc.x, fc.y);
+        }
         constructor(...args: any){
             super(...args)
             this.controller = new DragController();
@@ -80,9 +84,7 @@ export function FEdragRegion<T extends new (...args: any) => FElement>(base: T) 
                     else{
                         this.controller.select(child);
                     }
-                    
-                    let fc = this.getCoords(e);
-                    this.controller.beginDrag(fc.x, fc.y);
+                    this.startDrag(e);
                 })
             }
         }

@@ -1,20 +1,15 @@
-import { FEcarousel } from "./components/carousel.js";
-import { FEcounterlist } from "./components/counterList.js";
-import { createGlyphEditor, createSVGforGlyph, FEglyphDisplay } from "./components/glyphCanvas.js";
+import { FEglyphDisplay } from "./components/glyphCanvas.js";
 import { FEglyphEditor } from "./components/glyphEditor.js";
 import { FEhorizontallDivider } from "./components/horizontalDivider.js";
-import { FEpinput } from "./components/Pinput.js";
-import { FEgameInfoList } from "./components/publicGameList.js";
 import { FEtreeView } from "./components/treeView.js";
 import { FEverticalDivider } from "./components/verticalDivider.js";
 import { Font } from "./font/font.js";
-import { FontReader } from "./font/fontReader.js";
 import { fontTableReader, offsetSubtable } from "./font/fontTableReader.js";
 import { multiElement } from "./lib/domtools.js";
-import { DIV, INPUT, P, SetDocumentContent } from "./lib/htmltools.js";
-import { SVG } from "./lib/svgtools.js";
+import { DIV, SetDocumentContent } from "./lib/htmltools.js";
 
-fetch("Comic Sans MS Bold.ttf").then((response) => response.arrayBuffer().then((response) => loadPage(response)));
+
+fetch("CascadiaMono-VariableFont_wght.ttf").then((response) => response.arrayBuffer().then((response) => loadPage(response)));
 
 let loadPage = (fontfilebuffer: ArrayBuffer) => {
     let font = new Font(fontfilebuffer);
