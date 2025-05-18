@@ -1,9 +1,9 @@
 import { Font } from "../font/font.js";
 import { CompoundGlyph, SimpleGlyph } from "../font/fontReader.js";
 import { FEdragRegion, SVGboxResizer, SVGboxSelect } from "../lib/domtools.js";
-import { FESVG, GROUP, PATH, SVGFElement, FESVGGroup, RECT } from "../lib/svgtools.js";
+import { FESVG, GROUP, PATH, SVGFElement, FESVGGroup, RECT, LINE } from "../lib/svgtools.js";
 import { Transform2d, transformBounds } from "../lib/transformtools.js";
-import { DraggableGlyphPoint, GlyphToSvgPathData, DraggableGlyph, createSVGforGlyph, SVGGlyphContour } from "./glyphGUIComponents.js";
+import { DraggableGlyphPoint, GlyphToSvgPathData, DraggableGlyph, createSVGforGlyph, SVGGlyphContour, OffCurvePointGuideLine, OnCurvePointGuideLine } from "./glyphGUIComponents.js";
 
 
 export function createGlyphEditor(font: Font, index: number): FEglyphCanvas{
@@ -42,6 +42,9 @@ class FEglyphCanvas extends FEdragRegion(FESVG){
         this.filterCoordinates = (x,y) => {
             return transform.then(this.cameraTransform).inverse().applyTo({x: x / this.element.clientWidth,y: y / this.element.clientHeight});
         };
+        this.controller.whileDragging.addResponse((x,y) => {
+            this.resizer.updateShifted(x,y);
+        });
         this.withClass("point-plot").withAttributes({viewBox: `0 0 1 1`});
 
         this.boxselect = new SVGboxSelect(this, canvas);
@@ -56,7 +59,7 @@ class FEglyphCanvas extends FEdragRegion(FESVG){
         let currentContour = [];
         for(let i = 0; i < glyph.points.length; i++){
             let p = glyph.points[i];
-            points.push(new DraggableGlyphPoint(p.px, p.py, p.isOnCurve, p.isImplied, p.isEndpoint));
+            points.push(new DraggableGlyphPoint(p.px, p.py, p.isOnCurve, p.isImplied, p.isEndpoint, contours.length, currentContour.length));
             currentContour.push(i);
             if(p.isEndpoint){
                 contours.push(currentContour);
@@ -75,29 +78,54 @@ class FEglyphCanvas extends FEdragRegion(FESVG){
                 this.mouseOnEmpty = false;
             });
         })
+        let guidelineP = new OffCurvePointGuideLine();
+        let guidelineN = new OffCurvePointGuideLine();
+        let guidelineO = new OnCurvePointGuideLine();
         this.canvas.replaceContent(
             bezierPath.withClass("character-outline"),
             GROUP(...contours),
+            GROUP(guidelineO, guidelineP, guidelineN),
             GROUP(...points),
         )
+        
         this.addDraggableChildren(...points);
+        
         this.controller.whileDragging.addResponse(() => {
+            if(this.controller.selectedElements.length == 1){
+                guidelineP.update();
+                guidelineN.update();
+                guidelineO.update();
+            }
             bezierPath.setData(GlyphToSvgPathData(points));
             contours.map((c) => c.update(points));
-            if(this.controller.selectedElements.length == 1){
-                let point = this.controller.selectedElements[0] as DraggableGlyphPoint;
-                if(!point.isOnCurve){
-
-                }
-            }
         });
-        this.controller.whileDragging.fire();
+        this.controller.whileDragging.fire(0,0);
         this.boxselect.onSelect.addResponse(() => {     
             this.controller.multiselect(...points.filter((p) => this.boxselect.contains(p.x, p.y)));
         });
         this.controller.onSelectionChange.addResponse(() => {
             this.resizer.selfDestruct();
-            if(this.controller.selectedElements.length < 2){
+            guidelineP.disable();
+            guidelineN.disable();
+            guidelineO.disable();
+            if(this.controller.selectedElements.length == 0){
+                return
+            }
+            else if(this.controller.selectedElements.length < 2){
+                let point = this.controller.selectedElements[0] as DraggableGlyphPoint;
+                let contour = contours[point.contourIndex];
+                let p2 = contour.pointAtIndex(points, point.index - 2);
+                let p1 = contour.pointAtIndex(points, point.index - 1);
+                let n2 = contour.pointAtIndex(points, point.index + 2);
+                let n1 = contour.pointAtIndex(points, point.index + 1);
+                if(!point.isOnCurve){
+                    
+                    guidelineP.enable(point,p1, p2);
+                    guidelineN.enable(point,n1, n2);
+                }
+                else{
+                    guidelineO.enable(point, p1, n1);
+                }
                 return;
             }
             let bounds = {minx: Infinity, miny: Infinity, maxx: -Infinity, maxy: -Infinity}
@@ -110,11 +138,11 @@ class FEglyphCanvas extends FEdragRegion(FESVG){
                 }
             }
             this.canvas.addChildren(this.resizer);
-            this.resizer.x = bounds.minx;
-            this.resizer.y = bounds.miny;
-            this.resizer.width = bounds.maxx - bounds.minx;
-            this.resizer.height = bounds.maxy - bounds.miny;
-            this.resizer.update();
+            this.resizer.x = bounds.minx - 30;
+            this.resizer.y = bounds.miny - 30;
+            this.resizer.width = bounds.maxx - bounds.minx + 60;
+            this.resizer.height = bounds.maxy - bounds.miny + 60;
+            this.resizer.updateShifted(0,0);
         })
     }
     loadCompoundGlyph(font: Font, glyph: CompoundGlyph){
@@ -153,7 +181,7 @@ class FEglyphCanvas extends FEdragRegion(FESVG){
             this.resizer.y = bounds.miny;
             this.resizer.width = bounds.maxx - bounds.minx;
             this.resizer.height = bounds.maxy - bounds.miny;
-            this.resizer.update();
+            this.resizer.updateShifted(0,0);
         })
     }
 

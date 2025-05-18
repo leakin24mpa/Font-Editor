@@ -7,8 +7,8 @@ export class FEglyphEditor extends FEdiv{
         let charcode = font.cmap[glyphindex];
         super(
             DIV().withClass("glyph-info").says(`Editing ${String.fromCharCode(charcode)} (Unicode #${charcode})`),
-            createGlyphEditor(font, glyphindex)
-
+            createGlyphEditor(font, glyphindex),
+            DIV().says("")
         )
     }
     loadGlyph(font: Font, glyphindex: number){

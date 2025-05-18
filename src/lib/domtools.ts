@@ -1,7 +1,7 @@
 import { DragAction, DragController, Draggable } from "./draggable.js";
 import { FEvent } from "./eventtools.js";
 import { FElement } from "./htmltools.js";
-import { CIRCLE, FESVG, FESVGCircle, FESVGGroup, FESVGRect, RECT } from "./svgtools.js";
+import { FESVG, FESVGCircle, FESVGGroup, FESVGRect, RECT } from "./svgtools.js";
 
 export function multiElement(n: number, generator: Function){
     let elements = [];
@@ -173,6 +173,7 @@ class ResizerPoint extends FESVGCircle{
             this.withClass("my");
         }
     }
+
 }
 export class SVGboxResizer extends FESVGGroup{
     dragX: number;
@@ -183,6 +184,14 @@ export class SVGboxResizer extends FESVGGroup{
     width: number;
     height: number;
     update: Function;
+
+    isDragging: boolean;
+    dragElement: ResizerPoint;
+    
+    onBeginResize: FEvent;
+    onResize: FEvent;
+    onDoneResizing: FEvent;
+
     constructor(x: number, y: number, width: number, height: number, radius: number){
         let rect = RECT(x, y, width, height).withClass("resizer-rect");
         let points = [
@@ -196,18 +205,36 @@ export class SVGboxResizer extends FESVGGroup{
             new ResizerPoint(radius, -1, 0),
             new ResizerPoint(radius, 0, 0).withClass("rotate")
         ]
-        const update = () => {
-            points[0].setPosition(this.x, this.y);
-            points[1].setPosition(this.x + this.width, this.y);
-            points[2].setPosition(this.x + this.width, this.y + this.height);
-            points[3].setPosition(this.x, this.y + this.height);
-            points[4].setPosition(this.x + this.width / 2, this.y);
-            points[5].setPosition(this.x + this.width, this.y + this.height / 2);
-            points[6].setPosition(this.x + this.width / 2, this.y + this.height);
-            points[7].setPosition(this.x, this.y + this.height / 2);
-            points[8].setPosition(this.x + this.width + 1.5 * radius, this.y + this.width + 1.5 * radius);
-            rect.setPosition(this.x, this.y);
-            rect.setSize(this.width, this.height);
+        const update = (minOffsetX, minOffsetY, maxOffsetX, maxOffsetY) => {
+            let x1 = this.x + minOffsetX;
+            let y1 = this.y + minOffsetY;
+            let x2 = this.x + this.width + maxOffsetX;
+            let y2 = this.y + this.height + maxOffsetY;
+            
+            if(x2 < x1){
+                let t = x2;
+                x2 = x1;
+                x1 = t;
+            }
+            if(y2 < y1){
+                let t = y2;
+                y2 = y1;
+                y1 = t;
+            }
+            let my = (y1 + y2) / 2;
+            let mx = (x1 + x2) / 2;
+
+            points[0].setPosition(x1, y1);
+            points[1].setPosition(x2, y1);
+            points[2].setPosition(x2, y2);
+            points[3].setPosition(x1, y2);
+            points[4].setPosition(mx, y1);
+            points[5].setPosition(x2, my);
+            points[6].setPosition(mx, y2);
+            points[7].setPosition(x1, my);
+            points[8].setPosition(x2 + 1.5 * radius, y2 + 1.5 * radius);
+            rect.setPosition(x1, y1);
+            rect.setSize(x2 - x1, y2 - y1);
             
             this.element.style.visibility = (this.width < 0 || this.height < 0)? "hiddden": "visible";
         }
@@ -219,8 +246,15 @@ export class SVGboxResizer extends FESVGGroup{
         this.y = y;
         this.width = width;
         this.height = height;
-        update();
         this.update = update;
+        this.updateShifted(0,0);
+        points.map((p) => p.onEvent("click", (e: MouseEvent) => {
+            this.dragElement = p;
+            this.isDragging = true;
+            this.dragX = e.offsetX;
+            this.dragY = e.offsetY;
+            this.onBeginResize.fire();
+        }));
     }
     expandToContain(x: number, y: number){
         this.width = Math.max(this.width, x - this.x);
@@ -229,6 +263,22 @@ export class SVGboxResizer extends FESVGGroup{
         this.x = Math.min(this.x, x);
         this.y = Math.min(this.y, y);
     }
+    updateShifted(x,y){
+        this.update(x,y,x,y);
+    }
+    whileDragging(mouseDeltaX: number, mouseDeltaY: number){
+        if(!this.isDragging){
+            return;
+        }
+        if(this.dragElement.xc){
+            mouseDeltaX = 0;
+        }
+        if(this.dragElement.yc){
+            mouseDeltaY = 0;
+        }
+        
+    }
+    
 }
 
 

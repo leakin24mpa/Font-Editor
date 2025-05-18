@@ -71,7 +71,7 @@ export class DragController{
             for(let i = 0; i < this.selectedElements.length; i++){
                 this.selectedElements[i].duringDrag(mousex - this.dragX, mousey - this.dragY);
             }
-            this.whileDragging.fire();
+            this.whileDragging.fire(mousex - this.dragX, mousey - this.dragY);
         }
         
     }
@@ -80,9 +80,9 @@ export class DragController{
             for(let i = 0; i < this.selectedElements.length; i++){
                 this.selectedElements[i].completeDrag(mousex - this.dragX, mousey - this.dragY);
             }
-            this.whileDragging.fire();
+            this.whileDragging.fire(mousex - this.dragX, mousey - this.dragY);
             this.isDragging = false;
-            this.onDragEnd.fire();
+            this.onDragEnd.fire(mousex - this.dragX, mousey - this.dragY);
         } 
     }
     escapeDrag(){
@@ -91,9 +91,9 @@ export class DragController{
             for(let i = 0; i < this.selectedElements.length; i++){
                 this.selectedElements[i].completeDrag(0,0);
             }
-            this.whileDragging.fire();
+            this.whileDragging.fire(0,0);
             this.isDragging = false;
-            this.onDragEnd.fire();
+            this.onDragEnd.fire(0,0);
         }
     }
     constructor(){

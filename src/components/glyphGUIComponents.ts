@@ -1,7 +1,7 @@
 import { Font } from "../font/font.js";
 import { GlyphPoint, SimpleGlyph } from "../font/fontReader.js";
 import { Draggable } from "../lib/draggable.js";
-import { FESVGPath, FESVGCircle, SVGFElement, GROUP, PATH, FESVGGroup } from "../lib/svgtools.js";
+import { FESVGPath, FESVGCircle, SVGFElement, GROUP, PATH, FESVGGroup, FESVGLine, LINE } from "../lib/svgtools.js";
 import { Transform2d } from "../lib/transformtools.js";
 
 export class SVGGlyphContour extends FESVGPath{
@@ -14,6 +14,9 @@ export class SVGGlyphContour extends FESVGPath{
   }
   update(points: GlyphPoint[]){
     this.setData(this.toSvgPathData(points));
+  }
+  pointAtIndex(points: GlyphPoint[], index: number){
+    return points[this.indicies[index % this.indicies.length]];
   }
   toSvgPathData(points: GlyphPoint[]): string{
     let b = points[this.indicies[0]];
@@ -52,12 +55,18 @@ export class DraggableGlyphPoint extends FESVGCircle implements Draggable, Glyph
     isOnCurve: boolean;
     isImplied: boolean;
     isEndpoint: boolean;
-    constructor(x,y,isOnCurve, isImplied, isEndpoint){
+    contourIndex: number;
+    index: number;
+    constructor(x: number,y: number,isOnCurve: boolean, isImplied: boolean, isEndpoint: boolean, contourIndex: number, index: number){
         super(x,y,15);
         this.selected = false;
         this.isImplied = isImplied;
         this.isOnCurve = isOnCurve;
         this.isEndpoint = isEndpoint;
+        this.contourIndex = contourIndex;
+        this.index = index;
+        this.px = x;
+        this.py = y;
         if(isOnCurve){
             this.withClass("path-point");
         }
@@ -75,14 +84,20 @@ export class DraggableGlyphPoint extends FESVGCircle implements Draggable, Glyph
     duringDrag(mouseDeltaX: number, mouseDeltaY: number): void {
         this.px = mouseDeltaX + this.x;
         this.py = mouseDeltaY + this.y;
-        this.setPosition(this.px, this.py);
+        this.visualUpdate();
     }
     completeDrag(mouseDeltaX: number, mouseDeltaY: number): void {
-        this.x += mouseDeltaX;
-        this.y += mouseDeltaY;
-        this.px = this.x;
-        this.py = this.y;
-        this.setPosition(this.x, this.y);
+        this.confirmPosition(this.x + mouseDeltaX, this.y + mouseDeltaY);
+    }
+    visualUpdate(){
+        this.setPosition(this.px, this.py);
+    }
+    confirmPosition(x: number, y: number){
+        this.x = x;
+        this.y = y;
+        this.px = x;
+        this.py = y;
+        this.setPosition(x, y);
     }
 }
 export function GlyphToSvgPathData(points: GlyphPoint[]){
@@ -183,4 +198,113 @@ export class DraggableGlyph extends FESVGGroup implements Draggable{
         this.updateTransformData();
     }
     
+}
+class GuideLine extends FESVGLine{
+    point: DraggableGlyphPoint;
+    p1: DraggableGlyphPoint;
+    p2: DraggableGlyphPoint;
+
+    p1p: number;
+
+    protected isEnabled: boolean;
+
+    constructor(){
+        super(0,0,0,0);
+        this.withClass("guideline").withAttributes({visibility: "hidden"});
+        this.isEnabled = false;
+    }
+}
+export class OffCurvePointGuideLine extends GuideLine{
+    visualUpdate(){
+        this.setP1(this.point.px, this.point.py);
+        this.setP2(this.p2.px, this.p2.py);
+    }
+    enable(point: DraggableGlyphPoint, p1: DraggableGlyphPoint, p2: DraggableGlyphPoint){
+        let v1 = {x: p1.px - p2.px, y: p1.py - p2.py};
+        let v2 = {x: point.px - p2.px, y: point.py - p2.py};
+        let d = Math.sqrt(v2.x * v2.x + v2.y * v2.y);
+        let n = {x: v2.x / d, y: v2.y / d};
+        if(d == 0){
+            n = {x: 1, y: 0};
+        }
+        let distance = v1.x * -n.y + v1.y * n.x;
+        if(Math.abs(distance) > 10){ 
+            this.disable();
+            return;
+        }
+        this.isEnabled = true;
+        this.p1p = (d == 0)? 0: (v1.x * n.x + v1.y * n.y) / d;
+        this.withAttributes({visibility: "visible"});
+        this.point = point;
+        this.p1 = p1;
+        this.p2 = p2; 
+        this.visualUpdate();
+    }
+    update(){
+        if(this.isEnabled){
+            this.p1.px = this.p2.px + this.p1p * (this.point.px - this.p2.px);
+            this.p1.py = this.p2.py + this.p1p * (this.point.py - this.p2.py);
+            this.visualUpdate();
+            this.p1.visualUpdate();
+        }
+    }
+    disable(){
+        if(this.isEnabled){
+            this.p1.confirmPosition(this.p1.px, this.p1.py);
+            this.withAttributes({visibility: "hidden"});
+            this.isEnabled = false;
+        }
+    }
+}
+
+export class OnCurvePointGuideLine extends GuideLine{
+    visualUpdate(){
+        this.setP1(this.p1.px, this.p1.py);
+        this.setP2(this.p2.px, this.p2.py);
+    }
+    enable(point: DraggableGlyphPoint, p1: DraggableGlyphPoint, p2: DraggableGlyphPoint){
+        let v1 = {x: p1.px - p2.px, y: p1.py - p2.py};
+        let v2 = {x: point.px - p2.px, y: point.py - p2.py};
+        let d = Math.sqrt(v1.x * v1.x + v1.y * v1.y);
+        let n = {x: v1.x / d, y: v1.y / d};
+        if(d == 0){
+            n = {x: 1, y: 0};
+        }
+        let distance = v2.x * -n.y + v2.y * n.x;
+        if(Math.abs(distance) > 10){ 
+            this.disable();
+            return;
+        }
+        this.isEnabled = true;
+        this.p1p = (d == 0)? 0: (v1.x * n.x + v1.y * n.y) / d;
+        this.withAttributes({visibility: "visible"});
+        this.point = point;
+        this.p1 = p1;
+        this.p2 = p2; 
+        this.visualUpdate();
+    }
+    update(){
+        if(!this.isEnabled){
+            return;
+        }
+        let v1 = {x: this.p1.px - this.p2.px, y: this.p1.py - this.p2.py};
+        let v2 = {x: this.point.px - this.p2.px, y: this.point.py - this.p2.py};
+        let d = Math.sqrt(v1.x * v1.x + v1.y * v1.y);
+        let n = {x: v1.x / d, y: v1.y / d};
+        if(d == 0){
+            n = {x: 1, y: 0};
+        }
+        let distance = v2.x * n.x + v2.y * n.y;
+        distance = Math.min(Math.max(distance, 0), d);
+        this.point.px = this.p2.px + n.x * distance;
+        this.point.py = this.p2.py + n.y * distance;
+        this.point.visualUpdate();
+        this.visualUpdate();
+    }
+    disable(){
+        if(this.isEnabled){
+            this.withAttributes({visibility: "hidden"});
+            this.isEnabled = false;
+        }
+    }
 }

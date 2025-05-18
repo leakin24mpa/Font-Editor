@@ -57,7 +57,7 @@ body{
 }
 .glyph-contour{
     fill: transparent;
-    pointer-events: stroke;
+    /* pointer-events: stroke; */
     stroke-width: 10px;
     stroke-linejoin: round;
     stroke: rgb(56, 103, 31);
@@ -201,3 +201,8 @@ body{
     cursor: nesw-resize;
 }
 
+.guideline{
+    stroke:rgb(166, 172, 161);
+    stroke-width: 5;
+    stroke-dasharray: 15 10;
+}
